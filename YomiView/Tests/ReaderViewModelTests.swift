@@ -121,6 +121,48 @@ final class ReaderViewModelTests: XCTestCase {
         XCTAssertFalse(viewModel.isBookOpen)
     }
 
+    func testOpeningBrokenFilesShowsErrorAndKeepsCurrentBook() throws {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("YomiViewBroken-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let brokenZip = dir.appendingPathComponent("broken.zip")
+        let brokenPDF = dir.appendingPathComponent("broken.pdf")
+        let emptyFolder = dir.appendingPathComponent("empty", isDirectory: true)
+        try Data("not a zip".utf8).write(to: brokenZip)
+        try Data("not a pdf".utf8).write(to: brokenPDF)
+        try FileManager.default.createDirectory(at: emptyFolder, withIntermediateDirectories: true)
+
+        let viewModel = makeViewModel()
+        viewModel.setProvider(FakeProvider(count: 3))
+        for url in [brokenZip, brokenPDF, emptyFolder, dir.appendingPathComponent("missing.cbz")] {
+            viewModel.openError = nil
+            viewModel.open(url)
+            XCTAssertNotNil(viewModel.openError, url.lastPathComponent)
+            XCTAssertEqual(viewModel.provider?.title, "fake", "開けなかったときは今の本をそのまま表示する")
+        }
+    }
+
+    func testOpenDroppedUsesFirstFileURL() throws {
+        let viewModel = makeViewModel()
+        XCTAssertFalse(viewModel.openDropped([]))
+        XCTAssertNotNil(viewModel.openError)
+
+        viewModel.openError = nil
+        XCTAssertFalse(viewModel.openDropped([URL(string: "https://example.com/a.zip")!]))
+        XCTAssertNotNil(viewModel.openError)
+
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("YomiViewDrop-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try Data().write(to: folder.appendingPathComponent("1.png"))
+        viewModel.openError = nil
+        XCTAssertTrue(viewModel.openDropped([folder, folder.appendingPathComponent("1.png")]))
+        XCTAssertNil(viewModel.openError)
+        XCTAssertEqual(viewModel.provider?.title, folder.lastPathComponent)
+    }
+
     // MARK: - 見開き
 
     func testViewModeFollowsContainerShapeUntilToggledManually() {

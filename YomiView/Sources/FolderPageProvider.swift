@@ -16,7 +16,7 @@ final class FolderPageProvider: PageProvider {
                 options: [.skipsHiddenFiles, .skipsSubdirectoryDescendants]
             )
         } catch {
-            throw BookError.notFound(folderURL.lastPathComponent)
+            throw BookError.unreadableFolder(folderURL.lastPathComponent)
         }
 
         let imageURLs = contents.filter { url in

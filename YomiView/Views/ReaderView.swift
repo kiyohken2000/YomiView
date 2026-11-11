@@ -5,6 +5,7 @@ struct ReaderView: View {
     @State private var viewModel = ReaderViewModel()
     @FocusState private var isFocused: Bool
     @Environment(\.displayScale) private var displayScale
+    @State private var isDropTargeted = false
 
     var body: some View {
         ZStack {
@@ -30,6 +31,17 @@ struct ReaderView: View {
                     }
             }
         }
+        .overlay {
+            if isDropTargeted {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(Color.accentColor, lineWidth: 4)
+                    .padding(4)
+                    .allowsHitTesting(false)
+            }
+        }
+        .dropDestination(for: URL.self) { urls, _ in
+            viewModel.openDropped(urls)
+        } isTargeted: { isDropTargeted = $0 }
         .frame(minWidth: 400, minHeight: 300)
         .navigationTitle(viewModel.windowTitle)
         .focusable()
@@ -100,7 +112,7 @@ struct ReaderView: View {
         VStack(spacing: 12) {
             Image(systemName: "book")
                 .font(.system(size: 40))
-            Text("フォルダ、ZIP、CBZ、PDF を開いてください")
+            Text("フォルダ、ZIP、CBZ、PDF を開くか、ここにドロップしてください")
             Button("開く…") { viewModel.presentOpenPanel() }
         }
         .foregroundStyle(.secondary)

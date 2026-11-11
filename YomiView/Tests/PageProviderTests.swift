@@ -166,6 +166,38 @@ final class PageProviderTests: XCTestCase {
         }
     }
 
+    func testTruncatedZipThrows() throws {
+        let url = try makeZip(named: "cut.zip", entries: ["1.png": try pngData(), "2.png": try pngData()])
+        let data = try Data(contentsOf: url)
+        try data.prefix(data.count / 2).write(to: url)
+        XCTAssertThrowsError(try ZipPageProvider(archiveURL: url)) { error in
+            XCTAssertEqual(error as? BookError, .unreadableArchive("cut.zip"))
+        }
+    }
+
+    func testCorruptedEntryFailsOnlyThatPage() throws {
+        // 1枚目の画像データの中身を壊す（目次は正しいまま）
+        let good = try pngData()
+        let url = try makeZip(named: "bad.zip", entries: ["1.png": good, "2.png": good])
+        var data = try Data(contentsOf: url)
+        let marker = Data([0x89, 0x50, 0x4E, 0x47])
+        let start = try XCTUnwrap(data.range(of: marker)).lowerBound
+        data.replaceSubrange(start..<(start + 64), with: Data(repeating: 0, count: 64))
+        try data.write(to: url)
+
+        let provider = try ZipPageProvider(archiveURL: url)
+        XCTAssertEqual(provider.pageCount, 2)
+        // エントリの格納順は決まっていないので、どちらか1ページだけが失敗することを確かめる
+        let results = (0..<2).map { (try? provider.loadImage(at: $0, maxPixelSize: 100)) != nil }
+        XCTAssertEqual(results.filter { $0 }.count, 1)
+    }
+
+    func testEmptyZipFileThrows() throws {
+        let url = tempDir.appendingPathComponent("empty.cbz")
+        try Data().write(to: url)
+        XCTAssertThrowsError(try ZipPageProvider(archiveURL: url))
+    }
+
     func testZipConcurrentLoadsAreSafe() throws {
         let png = try pngData()
         var entries: [String: Data] = [:]

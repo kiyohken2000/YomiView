@@ -55,6 +55,7 @@ enum BookSource: Equatable {
 /// 本を開く・ページを読むときのエラー。
 enum BookError: LocalizedError, Equatable {
     case notFound(String)
+    case unreadableFolder(String)
     case unsupportedFormat(String)
     case unreadableArchive(String)
     case unreadablePDF(String)
@@ -66,6 +67,8 @@ enum BookError: LocalizedError, Equatable {
         switch self {
         case .notFound(let name):
             return "「\(name)」が見つかりません。"
+        case .unreadableFolder(let name):
+            return "フォルダ「\(name)」の中身を読み込めません。アクセス権を確認してください。"
         case .unsupportedFormat(let name):
             return "「\(name)」は対応していない形式です。フォルダ、ZIP、CBZ、PDF を開けます。"
         case .unreadableArchive(let name):

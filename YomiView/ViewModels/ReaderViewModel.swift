@@ -157,6 +157,17 @@ final class ReaderViewModel {
         open(url)
     }
 
+    /// ドロップされたファイルを開く。複数の場合は最初の1つだけを開く。
+    @discardableResult
+    func openDropped(_ urls: [URL]) -> Bool {
+        guard let url = urls.first(where: \.isFileURL) else {
+            openError = "ドロップされた項目を本として開けません。フォルダ、ZIP、CBZ、PDF をドロップしてください。"
+            return false
+        }
+        open(url)
+        return true
+    }
+
     /// 本を開く。前に読んだことのある本なら、最後に読んだページと見開き設定を復元する。
     func open(_ url: URL) {
         do {
