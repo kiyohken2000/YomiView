@@ -37,7 +37,7 @@ final class FolderPageProvider: PageProvider {
         guard pages.indices.contains(index), case .file(let url) = pages[index].kind else {
             throw BookError.pageOutOfRange(index)
         }
-        return PageImage(cgImage: try ImageLoading.downsample(url: url, maxPixelSize: maxPixelSize))
+        return try ImageLoading.loadPage(url: url, maxPixelSize: maxPixelSize)
     }
 
     func fileInfo(at index: Int) throws -> PageFileInfo {

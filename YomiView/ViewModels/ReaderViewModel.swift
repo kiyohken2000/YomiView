@@ -22,12 +22,26 @@ final class ReaderViewModel {
         }
     }
 
-    /// 画像の大きさ
-    enum ZoomMode {
-        /// ウィンドウに合わせる
-        case fit
-        /// 原寸
-        case original
+    /// 表示中のページの並べ方と大きさ（CanvasLayout で計算した結果）
+    struct Canvas: Equatable {
+        struct Page: Equatable {
+            let index: Int
+            /// 高さを揃えたときの大きさ（拡大率を掛ける前）
+            let size: CGSize
+        }
+
+        /// 左から並べるページ
+        var pages: [Page] = []
+        /// ページを並べた全体の大きさ（拡大率を掛ける前）
+        var frame: CGSize = .zero
+        /// ストレッチの倍率
+        var stretchScale: CGFloat = 1
+        /// ストレッチ × ユーザーの拡大率
+        var scale: CGFloat = 1
+        /// 回転・拡大後に外接する大きさ
+        var content: CGSize = .zero
+        /// 表示領域の中央からの移動量
+        var offset: CGSize = .zero
     }
 
     /// 本を開けなかったときの知らせ方
@@ -53,7 +67,14 @@ final class ReaderViewModel {
     private(set) var bookURL: URL?
     /// 現在のページ（表示中の組に含まれるページ）
     private(set) var currentIndex: Int = 0 {
-        didSet { if currentIndex != oldValue { savePosition() } }
+        didSet {
+            guard currentIndex != oldValue else { return }
+            savePosition()
+            // ページを変えたら拡大・回転・反転・ルーペを元に戻す（NeeView の既定）
+            transform = ViewTransform(origin: pendingOrigin ?? .start)
+            pendingOrigin = nil
+            isLoupeActive = false
+        }
     }
     /// 読み込みに失敗したページとその理由
     private(set) var failedPages: [Int: String] = [:]
@@ -65,10 +86,21 @@ final class ReaderViewModel {
     var manualViewMode: ViewMode? {
         didSet { if manualViewMode != oldValue { savePosition() } }
     }
-    /// 画像の大きさ（初期値はウィンドウに合わせる）
-    var zoomMode: ZoomMode = .fit {
-        didSet { if zoomMode != oldValue { scheduleLoads() } }
+    /// 拡大・回転・反転・移動の状態
+    var transform = ViewTransform() {
+        didSet { if transform.scale != oldValue.scale { scheduleLoads() } }
     }
+    /// ルーペ（NeeView の既定どおり、左ボタンを長押ししている間だけ有効）
+    var isLoupeActive = false {
+        didSet { if isLoupeActive != oldValue { scheduleLoads() } }
+    }
+    /// ルーペの倍率（NeeView の既定 2、1〜10、ホイールで 1 ずつ変える）
+    private(set) var loupeScale: CGFloat = 2
+    /// 読み込んで分かったページの大きさ（原寸表示のポイント）
+    private(set) var pageSizes: [Int: CGSize] = [:]
+    /// 読み込んで分かったページの縁の色（背景「画像に合わせた色」用）
+    private(set) var pageEdgeColors: [Int: CGColor] = [:]
+    @ObservationIgnored private var pendingOrigin: ViewOrigin?
     /// 表示領域の大きさ（ポイント）
     private(set) var containerSize: CGSize = .zero
     /// 表示領域の画面の倍率（Retina なら 2）
@@ -313,6 +345,8 @@ final class ReaderViewModel {
         }
         failedPages = [:]
         widePages = [:]
+        pageSizes = [:]
+        pageEdgeColors = [:]
         self.provider = provider
         currentIndex = min(max(0, startIndex), max(0, provider.pageCount - 1))
         scheduleLoads()
@@ -326,8 +360,11 @@ final class ReaderViewModel {
     }
 
     /// 前のページ（見開きでは前の組）へ。先頭では何もしない。
-    func goPrevious() {
+    /// `atEnd` なら前のページを終わりの位置（下端・読み終わりの側）から表示する。
+    func goPrevious(atEnd: Bool = false) {
+        if atEnd { pendingOrigin = .end }
         moveSpread(by: -1)
+        pendingOrigin = nil
     }
 
     /// 画面の左側のページへ（右開きでは次、左開きでは前）
@@ -378,16 +415,18 @@ final class ReaderViewModel {
 
     // MARK: - 画像の読み込み
 
-    /// 読み込む画像の長辺（ピクセル）。表示領域の長辺に画面の倍率を掛け、256 単位に切り上げる。
+    /// 読み込む画像の長辺（ピクセル）。表示中のページの表示上の長辺に画面の倍率（とルーペの倍率）を掛け、256 単位に切り上げる。
     /// 少しのウィンドウサイズ変更で読み直さないようにするため。
     var requiredPixelSize: Int {
-        if zoomMode == .original { return Self.originalMaxPixelSize }
-        let longSide = max(containerSize.width, containerSize.height) * displayScale
-        guard longSide > 0 else { return Self.screenMaxPixelSize() }
-        return max(256, Int((longSide / 256).rounded(.up)) * 256)
+        guard containerSize.width > 0, containerSize.height > 0 else { return Self.screenMaxPixelSize() }
+        let canvas = canvas
+        let longest = canvas.pages.map { max($0.size.width, $0.size.height) * canvas.scale }.max()
+            ?? max(containerSize.width, containerSize.height)
+        let pixels = longest * (isLoupeActive ? loupeScale : 1) * displayScale
+        return min(Self.originalMaxPixelSize, max(256, Int((pixels / 256).rounded(.up)) * 256))
     }
 
-    /// 原寸表示で読み込む長辺の上限（ピクセル）。これより大きい画像は縮小する
+    /// 読み込む長辺の上限（ピクセル）。これより大きく表示するときは拡大して表示する
     static let originalMaxPixelSize = 8192
 
     /// 表示領域の大きさが分からないときに使う、画面の長辺（ピクセル）
@@ -422,15 +461,20 @@ final class ReaderViewModel {
             let index = loadQueue.removeFirst()
             let maxPixelSize = requiredPixelSize
             guard failedPages[index] == nil, !cache.contains(index, sufficientFor: maxPixelSize) else { continue }
-            let result: Result<PageImage, Error> = await Task.detached(priority: .userInitiated) {
-                Result { try provider.loadImage(at: index, maxPixelSize: maxPixelSize) }
+            let result: Result<(PageImage, CGColor?), Error> = await Task.detached(priority: .userInitiated) {
+                Result {
+                    let image = try provider.loadImage(at: index, maxPixelSize: maxPixelSize)
+                    return (image, ImageLoading.edgeColor(of: image.cgImage))
+                }
             }.value
             // 読み込み中に別の本を開いた場合は捨てる
             guard !Task.isCancelled, self.provider === provider else { return }
             switch result {
-            case .success(let image):
+            case .success(let (image, edgeColor)):
                 cache.insert(image, for: index, maxPixelSize: maxPixelSize)
                 cacheRevision += 1
+                if pageSizes[index] != image.pointSize { pageSizes[index] = image.pointSize }
+                if let edgeColor { pageEdgeColors[index] = edgeColor }
                 if widePages[index] != image.isWide {
                     widePages[index] = image.isWide
                     // 横長と分かったことで組み合わせが変わる場合がある
@@ -438,6 +482,176 @@ final class ReaderViewModel {
                 }
             case .failure(let error):
                 failedPages[index] = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - 表示サイズ・拡大縮小・回転・反転（NeeView のナビゲーター）
+
+    /// 読み込み前のページの仮の大きさ（一般的な漫画のページの縦横比）
+    static let placeholderPageSize = CGSize(width: 700, height: 1000)
+
+    var canvas: Canvas {
+        let pages = displayedPages
+        let (sizes, frame) = CanvasLayout.frame(pageSizes: pages.map { pageSizes[$0] ?? Self.placeholderPageSize })
+        let stretch = CanvasLayout.stretchScale(
+            mode: settings.stretchMode, frame: frame, angle: transform.angle, canvas: containerSize,
+            allowScaleUp: settings.allowScaleUp, allowScaleDown: settings.allowScaleDown
+        )
+        let scale = stretch * transform.scale
+        let content = CanvasLayout.rotatedBounds(
+            CGSize(width: frame.width * scale, height: frame.height * scale), angle: transform.angle
+        )
+        let origin = CanvasLayout.originOffset(
+            content: content, canvas: containerSize, origin: transform.origin, direction: readingDirection
+        )
+        let offset = CanvasLayout.clampOffset(
+            CGSize(width: origin.width + transform.pan.width, height: origin.height + transform.pan.height),
+            content: content, canvas: containerSize
+        )
+        return Canvas(
+            pages: zip(pages, sizes).map { Canvas.Page(index: $0, size: $1) },
+            frame: frame, stretchScale: stretch, scale: scale, content: content, offset: offset
+        )
+    }
+
+    /// 背景「画像に合わせた色」のときの色（表示中の最初のページの縁の色）
+    var autoBackgroundColor: CGColor? {
+        displayedPages.lazy.compactMap { self.pageEdgeColors[$0] }.first
+    }
+
+    /// 表示サイズのモードを変える。ユーザーの拡大率と移動はリセットする。
+    func setStretchMode(_ mode: PageStretchMode) {
+        settings.stretchMode = mode
+        transform.scale = 1
+        transform.pan = .zero
+        scheduleLoads()
+    }
+
+    func setAllowScaleUp(_ allow: Bool) {
+        settings.allowScaleUp = allow
+        scheduleLoads()
+    }
+
+    func setAllowScaleDown(_ allow: Bool) {
+        settings.allowScaleDown = allow
+        scheduleLoads()
+    }
+
+    /// 拡大率を変える刻み（NeeView の ViewScaleUp / ViewScaleDown の既定 20%）
+    static let scaleStep: CGFloat = 0.2
+
+    /// 表示上の拡大率（ストレッチ込み）。ナビゲーターの「スケール」に表示する
+    var displayedScale: CGFloat { canvas.scale }
+
+    /// 拡大（ストレッチ込みの拡大率が 100% をまたぐときは 100% で止める。NeeView の IsSnapDefaultScale）
+    func zoomIn() {
+        setDisplayedScale(snap(displayedScale, to: displayedScale * (1 + Self.scaleStep)))
+    }
+
+    func zoomOut() {
+        setDisplayedScale(snap(displayedScale, to: displayedScale / (1 + Self.scaleStep)))
+    }
+
+    private func snap(_ old: CGFloat, to new: CGFloat) -> CGFloat {
+        (old < 1 && new > 1) || (old > 1 && new < 1) ? 1 : new
+    }
+
+    /// 表示上の拡大率を指定する（ストレッチ込み）
+    func setDisplayedScale(_ value: CGFloat) {
+        let stretch = canvas.stretchScale
+        guard stretch > 0 else { return }
+        transform.scale = min(ViewTransform.maxScale, max(ViewTransform.minScale, value / stretch))
+        clampPan()
+    }
+
+    /// ピンチなどで、ユーザーの拡大率を直接指定する
+    func setUserScale(_ value: CGFloat) {
+        transform.scale = min(ViewTransform.maxScale, max(ViewTransform.minScale, value))
+        clampPan()
+    }
+
+    func resetScale() {
+        transform.scale = 1
+        clampPan()
+    }
+
+    func rotateLeft() { setAngle(transform.angle - 90) }
+    func rotateRight() { setAngle(transform.angle + 90) }
+
+    /// 回転角度を指定する（-180〜180 度に丸める）
+    func setAngle(_ angle: Double) {
+        var normalized = angle.truncatingRemainder(dividingBy: 360)
+        if normalized > 180 { normalized -= 360 }
+        if normalized <= -180 { normalized += 360 }
+        transform.angle = normalized
+        clampPan()
+        scheduleLoads()
+    }
+
+    func resetAngle() { setAngle(0) }
+
+    func toggleFlipHorizontal() { transform.flipHorizontal.toggle() }
+    func toggleFlipVertical() { transform.flipVertical.toggle() }
+
+    /// 拡大・回転・反転・移動をすべて元に戻す（NeeView の ViewReset）
+    func resetView() {
+        transform = ViewTransform()
+        scheduleLoads()
+    }
+
+    /// ドラッグで画像を動かす
+    func pan(by delta: CGSize) {
+        transform.pan.width += delta.width
+        transform.pan.height += delta.height
+        clampPan()
+    }
+
+    /// 移動量を、表示領域から離れすぎない範囲に収める
+    private func clampPan() {
+        let canvas = canvas
+        let origin = CanvasLayout.originOffset(
+            content: canvas.content, canvas: containerSize, origin: transform.origin, direction: readingDirection
+        )
+        transform.pan = CGSize(width: canvas.offset.width - origin.width, height: canvas.offset.height - origin.height)
+    }
+
+    /// スクロールの1回分の操作。画像が表示領域からはみ出していればその中を移動し、端まで来たらページを送る
+    /// （NeeView の NextScrollPage / PrevScrollPage と N字スクロール）。はみ出していなければすぐにページを送る。
+    func scroll(_ action: ScrollPager.Action) {
+        if isLoupeActive {
+            // ルーペ中のホイールはルーペの倍率を変える（NeeView の LoupeScaleUp / LoupeScaleDown）
+            loupeScale = min(10, max(1, loupeScale + (action == .previous ? 1 : -1)))
+            scheduleLoads()
+            return
+        }
+        let canvas = canvas
+        let overX = max(0, (canvas.content.width - containerSize.width) / 2)
+        let overY = max(0, (canvas.content.height - containerSize.height) / 2)
+        let stepY = containerSize.height * 0.8
+        let stepX = containerSize.width * 0.8
+        // 読み進める向きの横移動：右開きは内容を右へ（offset を増やす）
+        let forwardX: CGFloat = readingDirection == .rightToLeft ? 1 : -1
+        let epsilon: CGFloat = 0.5
+        let offset = canvas.offset
+
+        switch action {
+        case .next:
+            if overY > epsilon, offset.height > -overY + epsilon {
+                pan(by: CGSize(width: 0, height: -stepY))
+            } else if overX > epsilon, offset.width * forwardX < overX - epsilon {
+                // 横に進み、縦は上端へ戻る（N字）
+                pan(by: CGSize(width: stepX * forwardX, height: overY * 2))
+            } else {
+                goNext()
+            }
+        case .previous:
+            if overY > epsilon, offset.height < overY - epsilon {
+                pan(by: CGSize(width: 0, height: stepY))
+            } else if overX > epsilon, offset.width * forwardX > -overX + epsilon {
+                pan(by: CGSize(width: -stepX * forwardX, height: -overY * 2))
+            } else {
+                goPrevious(atEnd: true)
             }
         }
     }

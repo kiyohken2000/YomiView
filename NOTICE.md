@@ -19,6 +19,8 @@ YomiView は Windows 向け画像ビューア「NeeView」（Copyright (c) 2016-
 | `YomiView/Views/BookshelfPanelView.swift` | `NeeView/SidePanels/Bookshelf/FolderListView.xaml`、`FolderListBox.xaml.cs` | 本棚パネルの構成とクリック・ダブルクリックの動作 |
 | `YomiView/Services/ThumbnailStore.swift`、`Views/FilmStripView.swift`、`Views/PageListPanelView.swift` | `NeeView/Config/ThumbnailConfig.cs`、`Config/FilmStripConfig.cs`、`PageSelect/FilmStrip`、`SidePanels/PageList` | サムネイルの大きさと保持数、フィルムストリップとページリストの構成 |
 | `YomiView/Services/FileInformation.swift` | `NeeView/SidePanels/FileInfo/InformationKey.cs`、`InformationGroup.cs` | ファイル情報の項目とグループ |
+| `YomiView/Services/CanvasLayout.swift` | `NeeView/PageFrames/ContentSizeCalcurator.cs`、`NeeView/Book/PageStretchMode.cs` | ストレッチの倍率の計算、拡大・縮小の許可、見開きの高さ揃え |
+| `YomiView/Views/NavigatorPanelView.swift`、`ReaderView.swift` のマウス操作 | `NeeView/SidePanels/Navigate`、`NeeView/Config/ViewConfig.cs`、`MouseConfig.cs`、`LoupeConfig.cs` | ナビゲーターの構成、ドラッグ・長押しルーペ・カーソルを隠す動作と既定値 |
 | 表示文言 | `NeeView/Languages/ja.restext` | 「本棚」「名前↑」「次のブックはありません」などの日本語表示 |
 | `YomiView/Views/ReaderView.swift`、`AddressBarView.swift`、`SidePanelFrame.swift`、`PageSliderView.swift` | `NeeView/MainWindow/MainWindow.xaml`、`NeeView/AddressBar/AddressBarView.xaml`、`NeeView/PageSelect/PageSlider/PageSliderView.xaml` | 画面構成（アドレスバー、サイドパネル、ページスライダーの配置） |
 

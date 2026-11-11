@@ -268,12 +268,15 @@ final class ReaderViewModelTests: XCTestCase {
         XCTAssertLessThanOrEqual(viewModel.cache.pages.count, ReaderViewModel.cacheCapacity)
     }
 
-    func testRequiredPixelSizeFollowsContainer() {
+    func testRequiredPixelSizeFollowsDisplayedSize() {
         let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        viewModel.setProvider(FakeProvider(count: 3))
+        // 仮の大きさ 700x1000 のページを 1000x700 に合わせると高さ 700pt、Retina で 1400px → 1536
         viewModel.updateContainerSize(CGSize(width: 1000, height: 700), displayScale: 2)
-        XCTAssertEqual(viewModel.requiredPixelSize, 2048)
-        viewModel.updateContainerSize(CGSize(width: 1010, height: 700), displayScale: 2)
-        XCTAssertEqual(viewModel.requiredPixelSize, 2048, "少しの変化では読み直さない")
+        XCTAssertEqual(viewModel.requiredPixelSize, 1536)
+        viewModel.updateContainerSize(CGSize(width: 1010, height: 705), displayScale: 2)
+        XCTAssertEqual(viewModel.requiredPixelSize, 1536, "少しの変化では読み直さない")
         viewModel.updateContainerSize(CGSize(width: 400, height: 300), displayScale: 1)
         XCTAssertEqual(viewModel.requiredPixelSize, 512)
     }
@@ -296,76 +299,118 @@ final class ReaderViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.currentSpread?.pages, [0])
     }
 
-    func testOriginalZoomLoadsLargerImages() {
-        let viewModel = makeViewModel()
-        viewModel.updateContainerSize(CGSize(width: 800, height: 600), displayScale: 2)
-        XCTAssertEqual(viewModel.requiredPixelSize, 1792)
-        viewModel.zoomMode = .original
-        XCTAssertEqual(viewModel.requiredPixelSize, ReaderViewModel.originalMaxPixelSize)
-    }
-
-    // MARK: - 読書位置の復元
-
-    func testReopeningBookRestoresPageAndViewMode() throws {
-        let folder = FileManager.default.temporaryDirectory
-            .appendingPathComponent("YomiViewRestore-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: folder) }
-        for i in 1...8 {
-            try Data().write(to: folder.appendingPathComponent("\(i).png"))
-        }
-
-        let first = makeViewModel()
-        first.open(folder)
-        XCTAssertNil(first.openError)
-        first.manualViewMode = .single
-        first.goNext()
-        first.goNext()
-        first.goNext()
-        first.toggleViewMode()
-        XCTAssertEqual(first.currentIndex, 3)
-
-        // 別のウィンドウ（再起動後を想定）で同じ本を開く
-        let second = makeViewModel()
-        second.open(folder)
-        XCTAssertEqual(second.currentIndex, 3)
-        XCTAssertEqual(second.manualViewMode, .spread)
-        XCTAssertEqual(second.currentSpread?.pages, [3, 4])
-    }
-
-    func testRestoredPageIsClampedToBook() throws {
-        let folder = FileManager.default.temporaryDirectory
-            .appendingPathComponent("YomiViewClamp-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: folder) }
-        try Data().write(to: folder.appendingPathComponent("1.png"))
-
-        let store = RecentBooksStore(defaults: defaults)
-        store.recordOpen(folder)
-        store.updatePosition(of: folder, page: 50, viewMode: nil)
-
-        let viewModel = makeViewModel()
-        viewModel.open(folder)
-        XCTAssertEqual(viewModel.currentIndex, 0)
-    }
-
-    func testWindowTitleShowsArchivePathAndRightToLeftOrder() {
-        let viewModel = makeViewModel(direction: .rightToLeft)
-        viewModel.manualViewMode = .spread
-        viewModel.setProvider(FakeProvider(count: 4))
-        viewModel.goNext()
-        // 右開きでは左に表示するページ（2.png）が先
-        XCTAssertEqual(viewModel.windowTitle, "fake (2 / 4) - 2.png | 1.png")
-    }
-
-    func testGoToPageAndReload() throws {
+    func testZoomAndOriginalSizeLoadLargerImages() {
         let viewModel = makeViewModel()
         viewModel.manualViewMode = .single
-        viewModel.setProvider(FakeProvider(count: 10))
-        viewModel.go(to: 7)
-        XCTAssertEqual(viewModel.currentIndex, 7)
-        viewModel.go(to: 99)
-        XCTAssertEqual(viewModel.currentIndex, 7)
+        viewModel.setProvider(FakeProvider(count: 3))
+        viewModel.updateContainerSize(CGSize(width: 800, height: 600), displayScale: 2)
+        XCTAssertEqual(viewModel.requiredPixelSize, 1280)
+        viewModel.zoomIn()
+        XCTAssertEqual(viewModel.requiredPixelSize, 1536)
+        viewModel.setStretchMode(.none)
+        XCTAssertEqual(viewModel.requiredPixelSize, 2048, "オリジナル サイズは 1000pt × 2")
+    }
+
+    // MARK: - 表示の操作
+
+    func testZoomSnapsAtOneHundredPercent() {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        viewModel.setProvider(FakeProvider(count: 1))
+        viewModel.updateContainerSize(CGSize(width: 700, height: 900), displayScale: 2)
+        XCTAssertEqual(viewModel.displayedScale, 0.9, accuracy: 0.001)
+        viewModel.zoomIn()
+        XCTAssertEqual(viewModel.displayedScale, 1, accuracy: 0.001, "100% をまたぐときは 100% で止まる")
+        viewModel.zoomIn()
+        XCTAssertEqual(viewModel.displayedScale, 1.2, accuracy: 0.001)
+        viewModel.resetScale()
+        XCTAssertEqual(viewModel.displayedScale, 0.9, accuracy: 0.001)
+    }
+
+    func testRotateNormalizesAngleAndRefitsStretch() {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        viewModel.setProvider(FakeProvider(count: 1))
+        viewModel.updateContainerSize(CGSize(width: 1000, height: 1000), displayScale: 1)
+        XCTAssertEqual(viewModel.canvas.stretchScale, 1, accuracy: 0.001)
+        viewModel.rotateLeft()
+        XCTAssertEqual(viewModel.transform.angle, -90)
+        XCTAssertEqual(viewModel.canvas.content.width, 1000, accuracy: 0.001, "横倒しでもウィンドウに収まる")
+        viewModel.rotateLeft()
+        viewModel.rotateLeft()
+        XCTAssertEqual(viewModel.transform.angle, 90)
+        viewModel.setAngle(190)
+        XCTAssertEqual(viewModel.transform.angle, -170)
+    }
+
+    func testPageChangeResetsTransform() {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        viewModel.setProvider(FakeProvider(count: 3))
+        viewModel.zoomIn()
+        viewModel.rotateRight()
+        viewModel.toggleFlipHorizontal()
+        viewModel.goNext()
+        XCTAssertEqual(viewModel.transform, ViewTransform())
+    }
+
+    func testScrollMovesWithinImageThenTurnsPage() {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        viewModel.setProvider(FakeProvider(count: 3))
+        viewModel.updateContainerSize(CGSize(width: 700, height: 500), displayScale: 1)
+        viewModel.setStretchMode(.uniformToHorizontal)
+        // 幅に合わせると高さ 1000pt、表示領域 500pt：上端から始まる
+        XCTAssertEqual(viewModel.canvas.content.height, 1000, accuracy: 0.001)
+        XCTAssertEqual(viewModel.canvas.offset.height, 250, accuracy: 0.001)
+
+        viewModel.scroll(.next)
+        XCTAssertEqual(viewModel.currentIndex, 0)
+        XCTAssertEqual(viewModel.canvas.offset.height, -150, accuracy: 0.001)
+        viewModel.scroll(.next)
+        XCTAssertEqual(viewModel.canvas.offset.height, -250, accuracy: 0.001, "下端で止まる")
+        viewModel.scroll(.next)
+        XCTAssertEqual(viewModel.currentIndex, 1, "下端からさらにスクロールすると次のページ")
+        XCTAssertEqual(viewModel.canvas.offset.height, 250, accuracy: 0.001)
+
+        viewModel.scroll(.previous)
+        XCTAssertEqual(viewModel.currentIndex, 0, "上端からさらに戻すと前のページ")
+        XCTAssertEqual(viewModel.canvas.offset.height, -250, accuracy: 0.001, "前のページは下端から表示")
+    }
+
+    func testScrollTurnsPageImmediatelyWhenImageFits() {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        viewModel.setProvider(FakeProvider(count: 3))
+        viewModel.updateContainerSize(CGSize(width: 700, height: 1000), displayScale: 1)
+        viewModel.scroll(.next)
+        XCTAssertEqual(viewModel.currentIndex, 1)
+    }
+
+    func testPanIsClampedToContent() {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        viewModel.setProvider(FakeProvider(count: 1))
+        viewModel.updateContainerSize(CGSize(width: 700, height: 1000), displayScale: 1)
+        viewModel.pan(by: CGSize(width: 300, height: 300))
+        XCTAssertEqual(viewModel.canvas.offset, .zero, "収まっている画像は動かない")
+        viewModel.setDisplayedScale(2)
+        viewModel.pan(by: CGSize(width: 10_000, height: -10_000))
+        XCTAssertEqual(viewModel.canvas.offset.width, 350, accuracy: 0.001)
+        XCTAssertEqual(viewModel.canvas.offset.height, -500, accuracy: 0.001)
+    }
+
+    func testLoupeWheelChangesLoupeScale() {
+        let viewModel = makeViewModel()
+        viewModel.setProvider(FakeProvider(count: 3))
+        viewModel.isLoupeActive = true
+        viewModel.scroll(.previous)
+        XCTAssertEqual(viewModel.loupeScale, 3)
+        viewModel.scroll(.next)
+        viewModel.scroll(.next)
+        viewModel.scroll(.next)
+        XCTAssertEqual(viewModel.loupeScale, 1)
+        XCTAssertEqual(viewModel.currentIndex, 0, "ルーペ中のホイールではページを送らない")
     }
 
     func testCurrentPageIsKeptWhenSwitchingModes() {

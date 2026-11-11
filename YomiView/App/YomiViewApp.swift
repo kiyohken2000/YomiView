@@ -80,12 +80,41 @@ struct ReaderCommands: Commands {
             Divider()
             Toggle("フィルムストリップ", isOn: Bindable(AppSettings.shared).isFilmStripVisible)
             Divider()
-            Button("ウィンドウに合わせる") { viewModel?.zoomMode = .fit }
+            Menu("ストレッチ") {
+                ForEach(PageStretchMode.allCases) { mode in
+                    Toggle(mode.label, isOn: Binding(
+                        get: { AppSettings.shared.stretchMode == mode },
+                        set: { if $0 { viewModel?.setStretchMode(mode) ?? (AppSettings.shared.stretchMode = mode) } }
+                    ))
+                }
+            }
+            Button("ウィンドウに合わせる") { viewModel?.setStretchMode(.uniform) }
                 .keyboardShortcut("9", modifiers: .command)
-                .disabled(viewModel == nil || viewModel?.zoomMode == .fit)
-            Button("原寸") { viewModel?.zoomMode = .original }
+            Button("オリジナル サイズ") { viewModel?.setStretchMode(.none) }
                 .keyboardShortcut("0", modifiers: .command)
-                .disabled(viewModel == nil || viewModel?.zoomMode == .original)
+            Button("拡大") { viewModel?.zoomIn() }
+                .keyboardShortcut("+", modifiers: .command)
+                .disabled(viewModel?.isBookOpen != true)
+            Button("縮小") { viewModel?.zoomOut() }
+                .keyboardShortcut("-", modifiers: .command)
+                .disabled(viewModel?.isBookOpen != true)
+            Divider()
+            Button("右回転") { viewModel?.rotateRight() }
+                .keyboardShortcut("r", modifiers: .command)
+                .disabled(viewModel?.isBookOpen != true)
+            Button("左回転") { viewModel?.rotateLeft() }
+                .keyboardShortcut("l", modifiers: .command)
+                .disabled(viewModel?.isBookOpen != true)
+            Button("左右反転") { viewModel?.toggleFlipHorizontal() }
+                .disabled(viewModel?.isBookOpen != true)
+            Button("上下反転") { viewModel?.toggleFlipVertical() }
+                .disabled(viewModel?.isBookOpen != true)
+            Button("表示をリセット") { viewModel?.resetView() }
+                .disabled(viewModel?.isBookOpen != true)
+            Divider()
+            Picker("背景", selection: Bindable(AppSettings.shared).background) {
+                ForEach(BackgroundType.allCases) { Text($0.label).tag($0) }
+            }
             Divider()
         }
     }

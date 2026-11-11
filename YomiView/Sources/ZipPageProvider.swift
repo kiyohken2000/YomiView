@@ -64,7 +64,7 @@ final class ZipPageProvider: PageProvider, @unchecked Sendable {
         } catch {
             throw BookError.imageDecodeFailed(name)
         }
-        return PageImage(cgImage: try ImageLoading.downsample(data: data, maxPixelSize: maxPixelSize, name: name))
+        return try ImageLoading.loadPage(data: data, maxPixelSize: maxPixelSize, name: name)
     }
 
     func fileInfo(at index: Int) throws -> PageFileInfo {

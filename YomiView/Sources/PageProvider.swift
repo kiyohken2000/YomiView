@@ -19,7 +19,7 @@ protocol PageProvider: AnyObject, Sendable {
 /// 読み込んだページの画像。
 struct PageImage: @unchecked Sendable {
     let cgImage: CGImage
-    /// 原寸表示のときのサイズ（ポイント）。画像ファイルは読み込んだピクセル数、PDF はページのサイズ。
+    /// 原寸表示のときのサイズ（ポイント）。画像ファイルは元画像のピクセル数、PDF はページのサイズ。
     let pointSize: CGSize
 
     init(cgImage: CGImage, pointSize: CGSize? = nil) {
@@ -45,6 +45,62 @@ enum ImageLoading {
     static func isImageFileName(_ name: String) -> Bool {
         let ext = (name as NSString).pathExtension.lowercased()
         return imageExtensions.contains(ext)
+    }
+
+    /// 画像の縁の平均の色（背景「画像に合わせた色」用。NeeView の BackgroundType.Auto）
+    static func edgeColor(of image: CGImage) -> CGColor? {
+        let size = 16
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let context = CGContext(
+                  data: nil, width: size, height: size, bitsPerComponent: 8, bytesPerRow: size * 4,
+                  space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+              )
+        else { return nil }
+        context.interpolationQuality = .low
+        context.draw(image, in: CGRect(x: 0, y: 0, width: size, height: size))
+        guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return nil }
+        var total = [0.0, 0.0, 0.0], count = 0.0
+        for y in 0..<size {
+            for x in 0..<size where x == 0 || y == 0 || x == size - 1 || y == size - 1 {
+                let offset = (y * size + x) * 4
+                for c in 0..<3 { total[c] += Double(data[offset + c]) }
+                count += 1
+            }
+        }
+        return CGColor(
+            colorSpace: space,
+            components: [total[0] / count / 255, total[1] / count / 255, total[2] / count / 255, 1]
+        )
+    }
+
+    /// 元画像の大きさ（ピクセル）。EXIF の向きを反映する。
+    static func originalSize(of source: CGImageSource) -> CGSize? {
+        guard let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
+              let width = (props[kCGImagePropertyPixelWidth as String] as? NSNumber)?.doubleValue,
+              let height = (props[kCGImagePropertyPixelHeight as String] as? NSNumber)?.doubleValue
+        else { return nil }
+        let orientation = (props[kCGImagePropertyOrientation as String] as? NSNumber)?.intValue ?? 1
+        return (5...8).contains(orientation) ? CGSize(width: height, height: width) : CGSize(width: width, height: height)
+    }
+
+    /// 縮小して読み込み、原寸表示用に元画像の大きさを添える。
+    static func loadPage(_ source: CGImageSource, maxPixelSize: Int, name: String) throws -> PageImage {
+        let image = try downsample(source, maxPixelSize: maxPixelSize, name: name)
+        return PageImage(cgImage: image, pointSize: originalSize(of: source))
+    }
+
+    static func loadPage(url: URL, maxPixelSize: Int) throws -> PageImage {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else {
+            throw BookError.imageDecodeFailed(url.lastPathComponent)
+        }
+        return try loadPage(source, maxPixelSize: maxPixelSize, name: url.lastPathComponent)
+    }
+
+    static func loadPage(data: Data, maxPixelSize: Int, name: String) throws -> PageImage {
+        guard let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) else {
+            throw BookError.imageDecodeFailed(name)
+        }
+        return try loadPage(source, maxPixelSize: maxPixelSize, name: name)
     }
 
     /// ImageIO のサムネイル生成で縮小して読み込む。元画像の全体をデコードしない。

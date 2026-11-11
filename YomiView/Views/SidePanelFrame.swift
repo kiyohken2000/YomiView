@@ -6,6 +6,7 @@ enum SidePanelKind: String, CaseIterable, Identifiable {
     case pageList
     case history
     case fileInfo
+    case navigator
     case bookmark
 
     var id: String { rawValue }
@@ -15,7 +16,7 @@ enum SidePanelKind: String, CaseIterable, Identifiable {
     var side: Side {
         switch self {
         case .bookshelf, .pageList, .history: return .left
-        case .fileInfo, .bookmark: return .right
+        case .fileInfo, .navigator, .bookmark: return .right
         }
     }
 
@@ -25,6 +26,7 @@ enum SidePanelKind: String, CaseIterable, Identifiable {
         case .pageList: return "ページリスト"
         case .history: return "履歴"
         case .fileInfo: return "ファイル情報"
+        case .navigator: return "ナビゲーター"
         case .bookmark: return "ブックマーク"
         }
     }
@@ -35,6 +37,7 @@ enum SidePanelKind: String, CaseIterable, Identifiable {
         case .pageList: return "photo"
         case .history: return "clock.arrow.circlepath"
         case .fileInfo: return "info.circle.fill"
+        case .navigator: return "location.north.fill"
         case .bookmark: return "star.fill"
         }
     }
@@ -46,6 +49,7 @@ enum SidePanelKind: String, CaseIterable, Identifiable {
         case .pageList: return "p"
         case .history: return "h"
         case .fileInfo: return "i"
+        case .navigator: return "n"
         // NeeView の既定 D は開き方向の切り替え（合意済みの必須項目）と衝突するため、メニューの ⌥⌘B で開閉する
         case .bookmark: return nil
         }

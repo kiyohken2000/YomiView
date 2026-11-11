@@ -7,6 +7,12 @@ struct ReaderView: View {
     @FocusState private var isFocused: Bool
     @Environment(\.displayScale) private var displayScale
     @State private var isDropTargeted = false
+    @State private var dragState: DragState?
+    @State private var longPressTask: Task<Void, Never>?
+    @State private var cursorHideTask: Task<Void, Never>?
+    @State private var loupeAnchor: UnitPoint = .center
+    @State private var hoverLocation: CGPoint = .zero
+    @State private var magnifyBase: CGFloat?
     private let panelLayout: SidePanelLayout
     private var recentBooks: RecentBooksStore { viewModel.recentBooks }
 
@@ -100,6 +106,8 @@ struct ReaderView: View {
             HistoryPanelView(recentBooks: recentBooks, viewModel: viewModel)
         case .fileInfo:
             FileInfoPanelView(viewModel: viewModel)
+        case .navigator:
+            NavigatorPanelView(viewModel: viewModel)
         case .bookmark:
             BookmarkPanelView(bookmarks: BookmarkStore.shared, viewModel: viewModel)
         }
@@ -109,13 +117,20 @@ struct ReaderView: View {
 
     private var mainView: some View {
         ZStack {
-            Theme.windowBackground
             if viewModel.isBookOpen {
-                SpreadView(
-                    pages: viewModel.displayedPages.map { ($0, viewModel.state(of: $0)) },
-                    zoomMode: viewModel.zoomMode
-                )
+                // ページは拡大前の大きさで並べるため、表示領域の大きさに影響しないよう overlay に置く
+                CanvasBackground(type: viewModel.settings.background, autoColor: viewModel.autoBackgroundColor)
+                    .overlay {
+                        SpreadView(
+                            canvas: viewModel.canvas,
+                            transform: viewModel.transform,
+                            state: { viewModel.state(of: $0) },
+                            loupeScale: viewModel.isLoupeActive ? viewModel.loupeScale : nil,
+                            loupeAnchor: loupeAnchor
+                        )
+                    }
             } else {
+                Theme.windowBackground
                 emptyBookView
             }
         }
@@ -147,15 +162,27 @@ struct ReaderView: View {
             }
         }
         .background {
-            ScrollWheelMonitor(isEnabled: viewModel.isBookOpen && viewModel.zoomMode == .fit) { action in
-                switch action {
-                case .next: viewModel.goNext()
-                case .previous: viewModel.goPrevious()
-                }
+            ScrollWheelMonitor(isEnabled: viewModel.isBookOpen) { action in
+                viewModel.scroll(action)
             }
         }
         .contentShape(Rectangle())
-        .onTapGesture { isFocused = true }
+        .gesture(pointerGesture)
+        .simultaneousGesture(
+            MagnifyGesture()
+                .onChanged { value in
+                    let base = magnifyBase ?? viewModel.transform.scale
+                    magnifyBase = base
+                    viewModel.setUserScale(base * value.magnification)
+                }
+                .onEnded { _ in magnifyBase = nil }
+        )
+        .onContinuousHover { phase in
+            if case .active(let location) = phase {
+                hoverLocation = location
+                scheduleCursorHide()
+            }
+        }
         .focusable()
         .focusEffectDisabled()
         .focused($isFocused)
@@ -167,11 +194,81 @@ struct ReaderView: View {
         }
     }
 
+    // MARK: - マウス操作（NeeView の既定：ドラッグで移動、長押しでルーペ、カーソルを自動で隠す）
+
+    /// ドラッグとみなす最小の移動量（NeeView の MinimumDragDistance）
+    private static let minimumDragDistance: CGFloat = 5
+    /// 長押しでルーペになるまでの時間（NeeView の LongButtonDownTime）
+    private static let longPressDuration: UInt64 = 1_000_000_000
+    /// カーソルを隠すまでの時間（NeeView の CursorHideTime）
+    private static let cursorHideDelay: UInt64 = 2_000_000_000
+
+    private var pointerGesture: some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            .onChanged { value in
+                if dragState == nil {
+                    dragState = DragState(lastTranslation: .zero)
+                    loupeAnchor = anchor(for: value.startLocation)
+                    longPressTask?.cancel()
+                    longPressTask = Task {
+                        try? await Task.sleep(nanoseconds: Self.longPressDuration)
+                        guard !Task.isCancelled, dragState?.isDragging == false else { return }
+                        viewModel.isLoupeActive = true
+                    }
+                }
+                guard var state = dragState else { return }
+                if viewModel.isLoupeActive {
+                    loupeAnchor = anchor(for: value.location)
+                    return
+                }
+                let distance = hypot(value.translation.width, value.translation.height)
+                if !state.isDragging, distance >= Self.minimumDragDistance {
+                    state.isDragging = true
+                    longPressTask?.cancel()
+                }
+                if state.isDragging {
+                    viewModel.pan(by: CGSize(
+                        width: value.translation.width - state.lastTranslation.width,
+                        height: value.translation.height - state.lastTranslation.height
+                    ))
+                    state.lastTranslation = value.translation
+                }
+                dragState = state
+            }
+            .onEnded { _ in
+                longPressTask?.cancel()
+                viewModel.isLoupeActive = false
+                dragState = nil
+                isFocused = true
+            }
+    }
+
+    private struct DragState {
+        var lastTranslation: CGSize
+        var isDragging = false
+    }
+
+    private func anchor(for location: CGPoint) -> UnitPoint {
+        let size = viewModel.containerSize
+        guard size.width > 0, size.height > 0 else { return .center }
+        return UnitPoint(x: min(1, max(0, location.x / size.width)), y: min(1, max(0, location.y / size.height)))
+    }
+
+    /// マウスを動かさずに2秒たったらカーソルを隠す（次に動かすと表示される）
+    private func scheduleCursorHide() {
+        cursorHideTask?.cancel()
+        cursorHideTask = Task {
+            try? await Task.sleep(nanoseconds: Self.cursorHideDelay)
+            guard !Task.isCancelled, viewModel.isBookOpen else { return }
+            NSCursor.setHiddenUntilMouseMoves(true)
+        }
+    }
+
     // MARK: - キーボード操作（計画書 5.4 と追加仕様の ↑↓）
 
     private static let handledKeys: Set<KeyEquivalent> = [
         .leftArrow, .rightArrow, .upArrow, .downArrow, .space, .home, .end,
-        "f", "F", "m", "M", "d", "D", "b", "B", "h", "H", "p", "P", "i", "I",
+        "f", "F", "m", "M", "d", "D", "b", "B", "h", "H", "p", "P", "i", "I", "n", "N",
     ]
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {

@@ -25,18 +25,24 @@ final class SnapshotTests: XCTestCase {
         let settings = AppSettings(defaults: defaults)
         let recentBooks = RecentBooksStore(defaults: defaults)
 
-        let snapshots: [(String, CGSize, SidePanelKind?, SidePanelKind?, Bool)] = [
-            ("spread-panels", CGSize(width: 1280, height: 800), .bookshelf, .fileInfo, true),
-            ("pagelist", CGSize(width: 1280, height: 800), .pageList, nil, false),
-            ("single", CGSize(width: 800, height: 1000), nil, nil, false),
+        let snapshots: [(String, CGSize, SidePanelKind?, SidePanelKind?, Bool, (ReaderViewModel) -> Void)] = [
+            ("spread-panels", CGSize(width: 1280, height: 800), .bookshelf, .fileInfo, true, { _ in }),
+            ("pagelist", CGSize(width: 1280, height: 800), .pageList, nil, false, { _ in }),
+            ("single", CGSize(width: 800, height: 1000), nil, nil, false, { _ in }),
+            ("navigator", CGSize(width: 1280, height: 800), nil, .navigator, false, { viewModel in
+                viewModel.settings.background = .checkDark
+                viewModel.rotateRight()
+                viewModel.toggleFlipHorizontal()
+            }),
         ]
-        for (name, size, left, right, filmStrip) in snapshots {
+        for (name, size, left, right, filmStrip, configure) in snapshots {
             layout.left = left
             layout.right = right
             settings.isFilmStripVisible = filmStrip
             let viewModel = ReaderViewModel(settings: settings, recentBooks: recentBooks)
             viewModel.open(URL(fileURLWithPath: book))
             viewModel.goNext()
+            configure(viewModel)
             let window = NSWindow(
                 contentRect: CGRect(origin: .zero, size: size),
                 styleMask: [.titled, .resizable], backing: .buffered, defer: false
@@ -54,6 +60,7 @@ final class SnapshotTests: XCTestCase {
             try XCTUnwrap(rep.representation(using: .png, properties: [:]))
                 .write(to: outDir.appendingPathComponent("\(name).png"))
             window.orderOut(nil)
+            settings.background = .black
         }
     }
 }
