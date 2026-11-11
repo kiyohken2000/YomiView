@@ -30,8 +30,23 @@ final class ReaderViewModel {
         case original
     }
 
+    /// 本を開けなかったときの知らせ方
+    enum FailureStyle {
+        /// アラートで知らせる（ファイル選択・ドロップ・アドレス入力など、明示的に開いたとき）
+        case alert
+        /// 画面下の通知で知らせる（本棚や前後の本への移動など、続けて操作するとき）
+        case notice
+    }
+
+    /// 画面に一時的に表示する通知（NeeView の InfoMessage）
+    struct InfoMessage: Equatable {
+        let id = UUID()
+        let text: String
+    }
+
     let settings: AppSettings
     let recentBooks: RecentBooksStore
+    let bookshelf: BookshelfModel
 
     private(set) var provider: PageProvider?
     /// 開いている本の場所（読書位置の保存に使う）
@@ -60,6 +75,11 @@ final class ReaderViewModel {
     private(set) var displayScale: CGFloat = 2
     /// 本を開けなかったときのエラー（アラート表示用）
     var openError: String?
+    /// 一時的な通知
+    private(set) var infoMessage: InfoMessage?
+    /// 開いた本の履歴（戻る / 進む用。NeeView の PrevBookHistory / NextBookHistory）
+    @ObservationIgnored private var bookHistory: [URL] = []
+    private(set) var bookHistoryIndex = -1
 
     /// キャッシュする件数の上限
     static let cacheCapacity = 8
@@ -70,9 +90,10 @@ final class ReaderViewModel {
     @ObservationIgnored private var loadQueue: [Int] = []
     @ObservationIgnored private var loaderTask: Task<Void, Never>?
 
-    init(settings: AppSettings? = nil, recentBooks: RecentBooksStore? = nil) {
+    init(settings: AppSettings? = nil, recentBooks: RecentBooksStore? = nil, bookshelf: BookshelfModel? = nil) {
         self.settings = settings ?? .shared
         self.recentBooks = recentBooks ?? .shared
+        self.bookshelf = bookshelf ?? BookshelfModel()
     }
 
     var isBookOpen: Bool { provider != nil }
@@ -184,7 +205,8 @@ final class ReaderViewModel {
     }
 
     /// 本を開く。前に読んだことのある本なら、最後に読んだページと見開き設定を復元する。
-    func open(_ url: URL) {
+    /// 開いた本の親フォルダを本棚に表示し、本の履歴に記録する。
+    func open(_ url: URL, failure: FailureStyle = .alert, recordHistory: Bool = true) {
         do {
             let provider = try BookSource.detect(url).makeProvider()
             let saved = recentBooks.recordOpen(url)
@@ -193,8 +215,79 @@ final class ReaderViewModel {
             setProvider(provider, startIndex: saved.lastPage)
             bookURL = url
             savePosition()
+            bookshelf.reveal(url)
+            if recordHistory { pushBookHistory(url) }
         } catch {
-            openError = error.localizedDescription
+            switch failure {
+            case .alert:
+                openError = error.localizedDescription
+            case .notice:
+                // 開けなくても本棚の選択は移し、続けて前後の本へ移動できるようにする
+                bookshelf.selected = url.standardizedFileURL
+                showInfo(error.localizedDescription)
+            }
+        }
+    }
+
+    // MARK: - 前後の本・本の履歴
+
+    /// 本棚で次の本を開く（NeeView の NextBook）
+    func openNextBook() {
+        openNeighborBook(offset: 1, failText: "次のブックはありません")
+    }
+
+    /// 本棚で前の本を開く（NeeView の PrevBook）
+    func openPreviousBook() {
+        openNeighborBook(offset: -1, failText: "前のブックはありません")
+    }
+
+    private func openNeighborBook(offset: Int, failText: String) {
+        if bookshelf.selected == nil, let bookURL { bookshelf.reveal(bookURL) }
+        guard let item = bookshelf.neighbor(offset: offset) else {
+            showInfo(failText)
+            return
+        }
+        open(item.url, failure: .notice)
+    }
+
+    /// 開いている本の親フォルダを本として開く（NeeView の MoveToParentBook）
+    func openParentBook() {
+        guard let bookURL, bookURL.path != "/" else { return }
+        open(bookURL.deletingLastPathComponent(), failure: .notice)
+    }
+
+    var canGoBackBook: Bool { bookHistoryIndex > 0 }
+    var canGoForwardBook: Bool { bookHistoryIndex >= 0 && bookHistoryIndex < bookHistory.count - 1 }
+
+    /// 本の履歴を戻る
+    func goBackBook() {
+        guard canGoBackBook else { return }
+        bookHistoryIndex -= 1
+        open(bookHistory[bookHistoryIndex], failure: .notice, recordHistory: false)
+    }
+
+    /// 本の履歴を進む
+    func goForwardBook() {
+        guard canGoForwardBook else { return }
+        bookHistoryIndex += 1
+        open(bookHistory[bookHistoryIndex], failure: .notice, recordHistory: false)
+    }
+
+    private func pushBookHistory(_ url: URL) {
+        let url = url.standardizedFileURL
+        if bookHistoryIndex >= 0, bookHistory[bookHistoryIndex] == url { return }
+        bookHistory.removeSubrange((bookHistoryIndex + 1)...)
+        bookHistory.append(url)
+        bookHistoryIndex = bookHistory.count - 1
+    }
+
+    /// 画面に通知を出し、2秒後に消す
+    func showInfo(_ text: String) {
+        let message = InfoMessage(text: text)
+        infoMessage = message
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            if self?.infoMessage == message { self?.infoMessage = nil }
         }
     }
 

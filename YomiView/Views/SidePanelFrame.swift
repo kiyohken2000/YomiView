@@ -2,6 +2,7 @@ import SwiftUI
 
 /// サイドパネルの種類。NeeView の既定の配置（左：本棚・ページリスト・履歴、右：ファイル情報・ナビゲーター・ブックマーク）に合わせる。
 enum SidePanelKind: String, CaseIterable, Identifiable {
+    case bookshelf
     case history
 
     var id: String { rawValue }
@@ -10,19 +11,29 @@ enum SidePanelKind: String, CaseIterable, Identifiable {
 
     var side: Side {
         switch self {
-        case .history: return .left
+        case .bookshelf, .history: return .left
         }
     }
 
     var title: String {
         switch self {
+        case .bookshelf: return "本棚"
         case .history: return "履歴"
         }
     }
 
     var systemImage: String {
         switch self {
+        case .bookshelf: return "books.vertical"
         case .history: return "clock.arrow.circlepath"
+        }
+    }
+
+    /// パネルを開閉するキー（NeeView の既定。⌘などの修飾キーなし）
+    var toggleKey: Character? {
+        switch self {
+        case .bookshelf: return "b"
+        case .history: return "h"
         }
     }
 
@@ -97,7 +108,7 @@ struct SideBarView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help(panel.title)
+                .help(panel.toggleKey.map { "\(panel.title)（\(String($0).uppercased())）" } ?? panel.title)
             }
             Spacer()
         }

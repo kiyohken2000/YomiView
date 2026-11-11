@@ -80,6 +80,8 @@ struct ReaderView: View {
     @ViewBuilder
     private func panelContent(_ panel: SidePanelKind) -> some View {
         switch panel {
+        case .bookshelf:
+            BookshelfPanelView(bookshelf: viewModel.bookshelf, viewModel: viewModel)
         case .history:
             HistoryPanelView(recentBooks: recentBooks, viewModel: viewModel)
         }
@@ -99,6 +101,20 @@ struct ReaderView: View {
                 emptyBookView
             }
         }
+        .overlay(alignment: .bottom) {
+            if let message = viewModel.infoMessage {
+                Text(message.text)
+                    .font(.system(size: 20))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Theme.notificationBackground)
+                    .padding(.bottom, 40)
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: viewModel.infoMessage)
         .clipped()
         .background {
             GeometryReader { geometry in
@@ -137,7 +153,7 @@ struct ReaderView: View {
 
     private static let handledKeys: Set<KeyEquivalent> = [
         .leftArrow, .rightArrow, .upArrow, .downArrow, .space, .home, .end,
-        "f", "F", "m", "M", "d", "D",
+        "f", "F", "m", "M", "d", "D", "b", "B", "h", "H",
     ]
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
@@ -160,7 +176,11 @@ struct ReaderView: View {
             case "f": NSApp.keyWindow?.toggleFullScreen(nil)
             case "m": viewModel.toggleViewMode()
             case "d": viewModel.toggleReadingDirection()
-            default: return .ignored
+            default:
+                guard let panel = SidePanelKind.allCases.first(where: {
+                    $0.toggleKey.map(String.init) == press.characters.lowercased()
+                }) else { return .ignored }
+                panelLayout.toggle(panel)
             }
         }
         return .handled

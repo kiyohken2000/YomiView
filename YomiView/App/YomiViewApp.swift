@@ -39,6 +39,27 @@ struct ReaderCommands: Commands {
                     .disabled(recentBooks.entries.isEmpty)
             }
         }
+        CommandMenu("移動") {
+            Button("次のブック") { viewModel?.openNextBook() }
+                .keyboardShortcut(.downArrow, modifiers: .option)
+            Button("前のブック") { viewModel?.openPreviousBook() }
+                .keyboardShortcut(.upArrow, modifiers: .option)
+            Divider()
+            Button("戻る") { viewModel?.goBackBook() }
+                .keyboardShortcut("[", modifiers: .command)
+                .disabled(viewModel?.canGoBackBook != true)
+            Button("進む") { viewModel?.goForwardBook() }
+                .keyboardShortcut("]", modifiers: .command)
+                .disabled(viewModel?.canGoForwardBook != true)
+            Button("上の階層へ") { viewModel?.openParentBook() }
+                .keyboardShortcut(.upArrow, modifiers: .command)
+                .disabled(viewModel?.isBookOpen != true)
+            Divider()
+            Button("最初のページ（Home）") { viewModel?.goFirst() }
+                .disabled(viewModel?.isBookOpen != true)
+            Button("最後のページ（End）") { viewModel?.goLast() }
+                .disabled(viewModel?.isBookOpen != true)
+        }
         CommandGroup(before: .toolbar) {
             Button(viewModel?.viewMode == .spread ? "1ページ表示にする（M）" : "見開き表示にする（M）") {
                 viewModel?.toggleViewMode()

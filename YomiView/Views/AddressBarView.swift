@@ -10,6 +10,24 @@ struct AddressBarView: View {
 
     var body: some View {
         HStack(spacing: 2) {
+            Button { viewModel.goBackBook() } label: {
+                Image(systemName: "arrow.left")
+            }
+            .help("戻る（⌘[）")
+            .disabled(!viewModel.canGoBackBook)
+
+            Button { viewModel.goForwardBook() } label: {
+                Image(systemName: "arrow.right")
+            }
+            .help("進む（⌘]）")
+            .disabled(!viewModel.canGoForwardBook)
+
+            Button { viewModel.openParentBook() } label: {
+                Image(systemName: "arrow.up")
+            }
+            .help("上の階層へ（⌘↑）")
+            .disabled(!viewModel.isBookOpen)
+
             Button { viewModel.reload() } label: {
                 Image(systemName: "arrow.clockwise")
             }
