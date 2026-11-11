@@ -66,7 +66,7 @@ final class ReaderViewModelTests: XCTestCase {
         viewModel.manualViewMode = .single
         viewModel.setProvider(FakeProvider(count: 3))
         XCTAssertEqual(viewModel.currentIndex, 0)
-        XCTAssertEqual(viewModel.windowTitle, "fake (1 / 3)")
+        XCTAssertEqual(viewModel.windowTitle, "fake (1 / 3) - 0.png")
 
         viewModel.goPrevious()
         XCTAssertEqual(viewModel.currentIndex, 0)
@@ -76,7 +76,7 @@ final class ReaderViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.currentIndex, 2)
         viewModel.goNext()
         XCTAssertEqual(viewModel.currentIndex, 2)
-        XCTAssertEqual(viewModel.windowTitle, "fake (3 / 3)")
+        XCTAssertEqual(viewModel.windowTitle, "fake (3 / 3) - 2.png")
 
         viewModel.goPrevious()
         XCTAssertEqual(viewModel.currentIndex, 1)
@@ -187,7 +187,7 @@ final class ReaderViewModelTests: XCTestCase {
 
         viewModel.goNext()
         XCTAssertEqual(viewModel.currentSpread?.pages, [1, 2])
-        XCTAssertEqual(viewModel.windowTitle, "fake (2-3 / 6)")
+        XCTAssertEqual(viewModel.windowTitle, "fake (2 / 6) - 1.png | 2.png")
         viewModel.goNext()
         XCTAssertEqual(viewModel.currentSpread?.pages, [3, 4])
         viewModel.goNext()
@@ -343,6 +343,25 @@ final class ReaderViewModelTests: XCTestCase {
         let viewModel = makeViewModel()
         viewModel.open(folder)
         XCTAssertEqual(viewModel.currentIndex, 0)
+    }
+
+    func testWindowTitleShowsArchivePathAndRightToLeftOrder() {
+        let viewModel = makeViewModel(direction: .rightToLeft)
+        viewModel.manualViewMode = .spread
+        viewModel.setProvider(FakeProvider(count: 4))
+        viewModel.goNext()
+        // 右開きでは左に表示するページ（2.png）が先
+        XCTAssertEqual(viewModel.windowTitle, "fake (2 / 4) - 2.png | 1.png")
+    }
+
+    func testGoToPageAndReload() throws {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        viewModel.setProvider(FakeProvider(count: 10))
+        viewModel.go(to: 7)
+        XCTAssertEqual(viewModel.currentIndex, 7)
+        viewModel.go(to: 99)
+        XCTAssertEqual(viewModel.currentIndex, 7)
     }
 
     func testCurrentPageIsKeptWhenSwitchingModes() {

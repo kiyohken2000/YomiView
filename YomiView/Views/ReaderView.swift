@@ -1,15 +1,95 @@
 import SwiftUI
 
-/// メインの表示領域。
+/// ウィンドウ全体。NeeView の画面構成（NeeView/MainWindow/MainWindow.xaml）に合わせ、
+/// 上にアドレスバー、左右にサイドパネル、中央に本、下にページスライダーを置く。
 struct ReaderView: View {
-    @State private var viewModel = ReaderViewModel()
+    @State private var viewModel: ReaderViewModel
     @FocusState private var isFocused: Bool
     @Environment(\.displayScale) private var displayScale
     @State private var isDropTargeted = false
+    private let panelLayout: SidePanelLayout
+    private var recentBooks: RecentBooksStore { viewModel.recentBooks }
+
+    init(viewModel: ReaderViewModel? = nil, panelLayout: SidePanelLayout? = nil) {
+        _viewModel = State(initialValue: viewModel ?? ReaderViewModel())
+        self.panelLayout = panelLayout ?? .shared
+    }
 
     var body: some View {
+        VStack(spacing: 0) {
+            AddressBarView(viewModel: viewModel) { isFocused = true }
+            HStack(spacing: 0) {
+                SideBarView(side: .left, layout: panelLayout)
+                sidePanel(on: .left)
+                mainView
+                sidePanel(on: .right)
+                SideBarView(side: .right, layout: panelLayout)
+            }
+            PageSliderView(
+                pageCount: viewModel.pageCount,
+                currentPage: viewModel.currentSpread?.first ?? 0,
+                isReversed: viewModel.readingDirection == .rightToLeft
+            ) { page in
+                viewModel.go(to: page)
+            }
+        }
+        .background(Theme.windowBackground)
+        .preferredColorScheme(.dark)
+        .frame(minWidth: 500, minHeight: 360)
+        .navigationTitle(viewModel.windowTitle)
+        .focusedSceneValue(\.readerViewModel, viewModel)
+        .dropDestination(for: URL.self) { urls, _ in
+            viewModel.openDropped(urls)
+        } isTargeted: { isDropTargeted = $0 }
+        .overlay {
+            if isDropTargeted {
+                Rectangle()
+                    .strokeBorder(Theme.accent, lineWidth: 4)
+                    .allowsHitTesting(false)
+            }
+        }
+        .alert(
+            "本を開けません",
+            isPresented: Binding(
+                get: { viewModel.openError != nil },
+                set: { if !$0 { viewModel.openError = nil } }
+            ),
+            presenting: viewModel.openError
+        ) { _ in
+            Button("OK") {}
+        } message: { message in
+            Text(message)
+        }
+    }
+
+    // MARK: - サイドパネル
+
+    @ViewBuilder
+    private func sidePanel(on side: SidePanelKind.Side) -> some View {
+        if let panel = panelLayout.selected(on: side) {
+            SidePanelContainer(
+                title: panel.title,
+                width: side == .left ? Bindable(panelLayout).leftWidth : Bindable(panelLayout).rightWidth,
+                side: side
+            ) {
+                panelContent(panel)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func panelContent(_ panel: SidePanelKind) -> some View {
+        switch panel {
+        case .history:
+            HistoryPanelView(recentBooks: recentBooks, viewModel: viewModel)
+        }
+    }
+
+    // MARK: - 本の表示領域
+
+    private var mainView: some View {
         ZStack {
-            Color.black
+            Theme.windowBackground
             if viewModel.isBookOpen {
                 SpreadView(
                     pages: viewModel.displayedPages.map { ($0, viewModel.state(of: $0)) },
@@ -19,6 +99,7 @@ struct ReaderView: View {
                 emptyBookView
             }
         }
+        .clipped()
         .background {
             GeometryReader { geometry in
                 Color.clear
@@ -31,27 +112,6 @@ struct ReaderView: View {
                     }
             }
         }
-        .overlay {
-            if isDropTargeted {
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(Color.accentColor, lineWidth: 4)
-                    .padding(4)
-                    .allowsHitTesting(false)
-            }
-        }
-        .dropDestination(for: URL.self) { urls, _ in
-            viewModel.openDropped(urls)
-        } isTargeted: { isDropTargeted = $0 }
-        .frame(minWidth: 400, minHeight: 300)
-        .navigationTitle(viewModel.windowTitle)
-        .focusable()
-        .focusEffectDisabled()
-        .focused($isFocused)
-        .onAppear { isFocused = true }
-        .onChange(of: viewModel.currentSpread) { viewModel.scheduleLoads() }
-        .onKeyPress(keys: Self.handledKeys, phases: [.down, .repeat]) { press in
-            handleKey(press)
-        }
         .background {
             ScrollWheelMonitor(isEnabled: viewModel.isBookOpen && viewModel.zoomMode == .fit) { action in
                 switch action {
@@ -60,18 +120,16 @@ struct ReaderView: View {
                 }
             }
         }
-        .focusedSceneValue(\.readerViewModel, viewModel)
-        .alert(
-            "本を開けません",
-            isPresented: Binding(
-                get: { viewModel.openError != nil },
-                set: { if !$0 { viewModel.openError = nil } }
-            ),
-            presenting: viewModel.openError
-        ) { _ in
-            Button("OK") {}
-        } message: { message in
-            Text(message)
+        .contentShape(Rectangle())
+        .onTapGesture { isFocused = true }
+        .focusable()
+        .focusEffectDisabled()
+        .focused($isFocused)
+        .onAppear { isFocused = true }
+        .onChange(of: viewModel.currentSpread) { viewModel.scheduleLoads() }
+        .onChange(of: viewModel.bookURL) { isFocused = true }
+        .onKeyPress(keys: Self.handledKeys, phases: [.down, .repeat]) { press in
+            handleKey(press)
         }
     }
 
@@ -115,7 +173,7 @@ struct ReaderView: View {
             Text("フォルダ、ZIP、CBZ、PDF を開くか、ここにドロップしてください")
             Button("開く…") { viewModel.presentOpenPanel() }
         }
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Theme.grayText)
     }
 }
 

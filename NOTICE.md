@@ -5,10 +5,17 @@
 YomiView は Windows 向け画像ビューア「NeeView」（Copyright (c) 2016-2026 Ito Mitsuhiro (nee), MIT License）の
 中核機能を参考に、macOS 向けに新たに実装したアプリケーションです。
 
-- NeeView のソースコードは、機能の挙動を理解するための参照にのみ使用しています。
-- 現時点で、NeeView のソースコードを移植・翻訳・複製した箇所はありません。
-  今後移植する場合は、対象ファイルと範囲をこのファイルに記載します。
+- phase-7 までは、NeeView のソースコードを挙動の理解のための参照にのみ使用しました。
+- phase-8 以降は、NeeView に近づけるため、一部のロジックと配色・画面構成を NeeView から移植しています。
+  移植した範囲は下の「移植した箇所」に記載します。
 - NeeView の名称・ロゴ・アイコンは使用していません。
+
+### 移植した箇所
+
+| YomiView | 移植元（NeeView） | 内容 |
+|---|---|---|
+| `YomiView/Views/Theme.swift` | `NeeView/Libraries/Themes/DarkTheme.json` | ダークテーマの配色 |
+| `YomiView/Views/ReaderView.swift`、`AddressBarView.swift`、`SidePanelFrame.swift`、`PageSliderView.swift` | `NeeView/MainWindow/MainWindow.xaml`、`NeeView/AddressBar/AddressBarView.xaml`、`NeeView/PageSelect/PageSlider/PageSliderView.xaml` | 画面構成（アドレスバー、サイドパネル、ページスライダーの配置） |
 
 NeeView: https://github.com/neelabo/NeeView
 

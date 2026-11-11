@@ -116,10 +116,25 @@ final class ReaderViewModel {
     }
 
     /// ウィンドウタイトル（本の名前と現在ページ）
+    ///
+    /// NeeView の既定の書式に合わせる：1ページは `本 (ページ / 総数) - ページ名`、
+    /// 2ページは `本 (ページ / 総数) - 左のページ名 | 右のページ名`。
     var windowTitle: String {
         guard let provider, let spread = currentSpread else { return "YomiView" }
-        let pages = spread.pages.count > 1 ? "\(spread.first + 1)-\(spread.last + 1)" : "\(spread.first + 1)"
-        return "\(provider.title) (\(pages) / \(provider.pageCount))"
+        let names = displayedPages.map { entryPath(of: $0) }.joined(separator: " | ")
+        return "\(provider.title) (\(spread.first + 1) / \(provider.pageCount)) - \(names)"
+    }
+
+    /// ページの場所の表示用文字列。アーカイブ内のフォルダは ` > ` でつなぐ（NeeView の {EntryPath:/ > }）
+    func entryPath(of page: Int) -> String {
+        guard let provider, provider.pages.indices.contains(page) else { return "" }
+        let item = provider.pages[page]
+        switch item.kind {
+        case .archiveEntry(let path):
+            return path.split(separator: "/").joined(separator: " > ")
+        case .file, .pdfPage:
+            return item.name
+        }
     }
 
     func updateContainerSize(_ size: CGSize, displayScale: CGFloat? = nil) {
@@ -223,6 +238,19 @@ final class ReaderViewModel {
     /// 画面の右側のページへ（右開きでは前、左開きでは次）
     func goRight() {
         readingDirection == .rightToLeft ? goPrevious() : goNext()
+    }
+
+    /// 指定ページへ（ページスライダーなど）
+    func go(to page: Int) {
+        guard (0..<pageCount).contains(page), page != currentIndex else { return }
+        currentIndex = page
+        scheduleLoads()
+    }
+
+    /// 開いている本を読み込み直す（NeeView の「再読み込み」）。現在のページは維持する。
+    func reload() {
+        guard let bookURL else { return }
+        open(bookURL)
     }
 
     /// 先頭の組へ

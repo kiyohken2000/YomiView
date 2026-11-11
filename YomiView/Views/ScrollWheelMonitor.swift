@@ -34,7 +34,10 @@ struct ScrollWheelMonitor: NSViewRepresentable {
             }
             guard window != nil else { return }
             monitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
-                guard let self, self.isEnabled, event.window === self.window else { return event }
+                // このビューの範囲（本の表示領域）の上でのスクロールだけを扱う。パネルの一覧などはそのままスクロールさせる
+                guard let self, self.isEnabled, event.window === self.window,
+                      self.bounds.contains(self.convert(event.locationInWindow, from: nil))
+                else { return event }
                 if let action = self.pager.handle(
                     deltaY: event.scrollingDeltaY,
                     phase: Self.phase(of: event),
