@@ -27,17 +27,27 @@ final class ReaderViewModel {
     private(set) var provider: PageProvider?
     /// 現在のページ（表示中の組に含まれるページ）
     private(set) var currentIndex: Int = 0
-    /// 読み込み済み・失敗したページの状態
-    private(set) var pageStates: [Int: PageState] = [:]
+    /// 読み込みに失敗したページとその理由
+    private(set) var failedPages: [Int: String] = [:]
+    /// キャッシュの中身が変わるたびに増える（View の更新用）
+    private(set) var cacheRevision = 0
     /// 読み込んで分かった、各ページが横長かどうか
     private(set) var widePages: [Int: Bool] = [:]
     /// M キーなどで手動で選んだ表示モード。nil なら表示領域の形で自動的に決める
     var manualViewMode: ViewMode?
     /// 表示領域の大きさ（ポイント）
     private(set) var containerSize: CGSize = .zero
+    /// 表示領域の画面の倍率（Retina なら 2）
+    private(set) var displayScale: CGFloat = 2
     /// 本を開けなかったときのエラー（アラート表示用）
     var openError: String?
 
+    /// キャッシュする件数の上限
+    static let cacheCapacity = 8
+    /// 現在の組の前後に先読みするページ数
+    static let prefetchCount = 2
+
+    @ObservationIgnored let cache = ImageCache(capacity: cacheCapacity)
     @ObservationIgnored private var loadQueue: [Int] = []
     @ObservationIgnored private var loaderTask: Task<Void, Never>?
 
@@ -78,7 +88,11 @@ final class ReaderViewModel {
     }
 
     func state(of page: Int) -> PageState {
-        pageStates[page] ?? .loading
+        _ = cacheRevision
+        if let message = failedPages[page] { return .failed(message) }
+        // 大きさが足りなくても、読み直しが終わるまでは手元の画像を表示する
+        if let image = cache.image(for: page) { return .loaded(image) }
+        return .loading
     }
 
     /// ウィンドウタイトル（本の名前と現在ページ）
@@ -88,9 +102,11 @@ final class ReaderViewModel {
         return "\(provider.title) (\(pages) / \(provider.pageCount))"
     }
 
-    func updateContainerSize(_ size: CGSize) {
-        guard size != containerSize else { return }
+    func updateContainerSize(_ size: CGSize, displayScale: CGFloat? = nil) {
+        let scale = displayScale ?? self.displayScale
+        guard size != containerSize || scale != self.displayScale else { return }
         containerSize = size
+        self.displayScale = scale
         scheduleLoads()
     }
 
@@ -135,7 +151,9 @@ final class ReaderViewModel {
         loaderTask?.cancel()
         loaderTask = nil
         loadQueue = []
-        pageStates = [:]
+        cache.removeAll()
+        cacheRevision += 1
+        failedPages = [:]
         widePages = [:]
         self.provider = provider
         currentIndex = min(max(0, startIndex), max(0, provider.pageCount - 1))
@@ -175,48 +193,62 @@ final class ReaderViewModel {
 
     // MARK: - 画像の読み込み
 
-    /// 読み込むときの長辺の上限（ピクセル）。画面の長辺に合わせる。
-    nonisolated static func displayMaxPixelSize() -> Int {
+    /// 読み込む画像の長辺（ピクセル）。表示領域の長辺に画面の倍率を掛け、256 単位に切り上げる。
+    /// 少しのウィンドウサイズ変更で読み直さないようにするため。
+    var requiredPixelSize: Int {
+        let longSide = max(containerSize.width, containerSize.height) * displayScale
+        guard longSide > 0 else { return Self.screenMaxPixelSize() }
+        return max(256, Int((longSide / 256).rounded(.up)) * 256)
+    }
+
+    /// 表示領域の大きさが分からないときに使う、画面の長辺（ピクセル）
+    nonisolated static func screenMaxPixelSize() -> Int {
         let sizes = NSScreen.screens.map { screen in
             max(screen.frame.width, screen.frame.height) * screen.backingScaleFactor
         }
         return Int(sizes.max() ?? 2048)
     }
 
-    /// 表示中のページを読み込む。表示に関わる状態が変わるたびに呼ぶ。
+    /// 読み込むページを優先順に返す：表示中のページ、次のページ、前のページ。
+    var pagesToLoad: [Int] {
+        guard let currentSpread else { return [] }
+        let after = (1...Self.prefetchCount).map { currentSpread.last + $0 }
+        let before = (1...Self.prefetchCount).map { currentSpread.first - $0 }
+        return (currentSpread.pages + after + before).filter { (0..<pageCount).contains($0) }
+    }
+
+    /// 表示中と前後のページの読み込みを予約する。表示に関わる状態が変わるたびに呼ぶ。
     func scheduleLoads() {
-        guard let currentSpread else { return }
-        let wanted = currentSpread.pages
-        // 表示しないページの画像は持たない
-        pageStates = pageStates.filter { wanted.contains($0.key) }
-        loadQueue = wanted.filter { pageStates[$0] == nil }
+        let size = requiredPixelSize
+        loadQueue = pagesToLoad.filter { failedPages[$0] == nil && !cache.contains($0, sufficientFor: size) }
         if loaderTask == nil, !loadQueue.isEmpty {
             loaderTask = Task { [weak self] in await self?.runLoader() }
         }
     }
 
+    /// 予約されたページを1枚ずつバックグラウンドで読み込む。表示はブロックしない。
     private func runLoader() async {
         defer { loaderTask = nil }
         while !Task.isCancelled, !loadQueue.isEmpty, let provider {
             let index = loadQueue.removeFirst()
-            guard pageStates[index] == nil else { continue }
-            let maxPixelSize = Self.displayMaxPixelSize()
+            let maxPixelSize = requiredPixelSize
+            guard failedPages[index] == nil, !cache.contains(index, sufficientFor: maxPixelSize) else { continue }
             let result: Result<PageImage, Error> = await Task.detached(priority: .userInitiated) {
                 Result { try provider.loadImage(at: index, maxPixelSize: maxPixelSize) }
             }.value
             // 読み込み中に別の本を開いた場合は捨てる
             guard !Task.isCancelled, self.provider === provider else { return }
-            guard currentSpread?.contains(index) == true else { continue }
             switch result {
             case .success(let image):
-                pageStates[index] = .loaded(image)
+                cache.insert(image, for: index, maxPixelSize: maxPixelSize)
+                cacheRevision += 1
                 if widePages[index] != image.isWide {
                     widePages[index] = image.isWide
                     // 横長と分かったことで組み合わせが変わる場合がある
                     scheduleLoads()
                 }
             case .failure(let error):
-                pageStates[index] = .failed(error.localizedDescription)
+                failedPages[index] = error.localizedDescription
             }
         }
     }

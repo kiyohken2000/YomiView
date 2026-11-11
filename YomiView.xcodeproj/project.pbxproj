@@ -18,6 +18,7 @@
 		534B3F0DDF3F473297EE13A1 /* YomiViewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEE5E5C37E592396C93B9469 /* YomiViewApp.swift */; };
 		543FA56B5F4D01FBA49E79D3 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 48D112662AC057A6ACD786E5 /* ZIPFoundation */; };
 		5444B040E44BB3CC1A3CC0A5 /* SpreadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D050C44D558DE3F1912548A1 /* SpreadView.swift */; };
+		5C5627E0B85DB181C5164E9F /* ImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3015DBC461C30E166A74C5A6 /* ImageCache.swift */; };
 		5EC70DC2044374460AFF0358 /* ReaderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF87CF1127B5F3F2CFE06F61 /* ReaderViewModel.swift */; };
 		6203652E1FDC18AFCA848778 /* ZipPageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3237B17797BED40CBFBE0238 /* ZipPageProvider.swift */; };
 		6BEDB2EBC946D69F01D53F5E /* PDFPageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C32251EFABB7E83D17A87C03 /* PDFPageProvider.swift */; };
@@ -26,6 +27,7 @@
 		8F1C79AA74FD47D0D8F06119 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81BBEE5F8AC0AA6ECF49FFDE /* AppSettings.swift */; };
 		91C9F8E49D7D4C39D1D919DA /* SpreadCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8401B49D11C102F287AC6E71 /* SpreadCalculator.swift */; };
 		AD34F7C77BB718B198B1D1CF /* ReadingDirection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C1326321B7720B7C3564A97 /* ReadingDirection.swift */; };
+		AFD79B7A6DE3D3BABCC4191A /* ImageCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6784F8AF2C0355B3BE0204C /* ImageCacheTests.swift */; };
 		BD81E1BF8C718F9F8684687C /* SpreadCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0011EB4302452BA68A23701 /* SpreadCalculatorTests.swift */; };
 		C1A1BA68ED03B198E599536E /* PageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86E6B9969336D2C4B4A3024 /* PageProvider.swift */; };
 		C20F224B130700039A1E42A7 /* ViewMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A5D91A58D7551E72864EF6 /* ViewMode.swift */; };
@@ -45,6 +47,7 @@
 
 /* Begin PBXFileReference section */
 		1FA0D0954AC94CE0B9361B83 /* NaturalSort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaturalSort.swift; sourceTree = "<group>"; };
+		3015DBC461C30E166A74C5A6 /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
 		3237B17797BED40CBFBE0238 /* ZipPageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipPageProvider.swift; sourceTree = "<group>"; };
 		5C1326321B7720B7C3564A97 /* ReadingDirection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingDirection.swift; sourceTree = "<group>"; };
 		5C3FF7726F93FF0C75416016 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -69,6 +72,7 @@
 		EE262AC736E719024C23071F /* FolderPageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPageProvider.swift; sourceTree = "<group>"; };
 		EEE5E5C37E592396C93B9469 /* YomiViewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YomiViewApp.swift; sourceTree = "<group>"; };
 		EF87CF1127B5F3F2CFE06F61 /* ReaderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderViewModel.swift; sourceTree = "<group>"; };
+		F6784F8AF2C0355B3BE0204C /* ImageCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCacheTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,6 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				81BBEE5F8AC0AA6ECF49FFDE /* AppSettings.swift */,
+				3015DBC461C30E166A74C5A6 /* ImageCache.swift */,
 				1FA0D0954AC94CE0B9361B83 /* NaturalSort.swift */,
 				8401B49D11C102F287AC6E71 /* SpreadCalculator.swift */,
 			);
@@ -193,6 +198,7 @@
 		F94FF45DCF9BE784FD97873D /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				F6784F8AF2C0355B3BE0204C /* ImageCacheTests.swift */,
 				76201A653BE5D196F00C4C29 /* NaturalSortTests.swift */,
 				98D8B3D45E30EFBD2CF2F678 /* PageProviderTests.swift */,
 				9B2B95CBB163992C7F991CEB /* PDFPageProviderTests.swift */,
@@ -291,6 +297,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFD79B7A6DE3D3BABCC4191A /* ImageCacheTests.swift in Sources */,
 				0ABBAAEBFEF1183410287F36 /* NaturalSortTests.swift in Sources */,
 				4DEDCDFD7834D8301F01E62D /* PDFPageProviderTests.swift in Sources */,
 				78BB6A35C74A824E868300EA /* PageProviderTests.swift in Sources */,
@@ -306,6 +313,7 @@
 				8F1C79AA74FD47D0D8F06119 /* AppSettings.swift in Sources */,
 				26914860ACBF295525395CE9 /* BookSource.swift in Sources */,
 				025FA6FA77D3E63431C0A2B0 /* FolderPageProvider.swift in Sources */,
+				5C5627E0B85DB181C5164E9F /* ImageCache.swift in Sources */,
 				D7146A6E02719064BE8A9EEC /* NaturalSort.swift in Sources */,
 				6BEDB2EBC946D69F01D53F5E /* PDFPageProvider.swift in Sources */,
 				15D91C429F7EE2009A0C9233 /* PageImageView.swift in Sources */,

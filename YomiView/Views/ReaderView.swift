@@ -4,6 +4,7 @@ import SwiftUI
 struct ReaderView: View {
     @State private var viewModel = ReaderViewModel()
     @FocusState private var isFocused: Bool
+    @Environment(\.displayScale) private var displayScale
 
     var body: some View {
         ZStack {
@@ -17,8 +18,13 @@ struct ReaderView: View {
         .background {
             GeometryReader { geometry in
                 Color.clear
-                    .onAppear { viewModel.updateContainerSize(geometry.size) }
-                    .onChange(of: geometry.size) { _, size in viewModel.updateContainerSize(size) }
+                    .onAppear { viewModel.updateContainerSize(geometry.size, displayScale: displayScale) }
+                    .onChange(of: geometry.size) { _, size in
+                        viewModel.updateContainerSize(size, displayScale: displayScale)
+                    }
+                    .onChange(of: displayScale) { _, scale in
+                        viewModel.updateContainerSize(geometry.size, displayScale: scale)
+                    }
             }
         }
         .frame(minWidth: 400, minHeight: 300)

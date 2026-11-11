@@ -187,6 +187,59 @@ final class ReaderViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.currentSpread?.pages, [3, 4])
     }
 
+    // MARK: - 先読みとキャッシュ
+
+    func testPrefetchesPagesAroundCurrentSpread() async {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        viewModel.setProvider(FakeProvider(count: 10))
+        viewModel.goNext()
+        viewModel.goNext()
+        viewModel.goNext()
+        XCTAssertEqual(viewModel.pagesToLoad, [3, 4, 5, 2, 1])
+
+        await waitForQueue(viewModel, pages: [1, 2, 3, 4, 5])
+        XCTAssertEqual(Set(viewModel.cache.pages).intersection([1, 2, 3, 4, 5]), [1, 2, 3, 4, 5])
+    }
+
+    func testPrefetchInSpreadModeIncludesNextSpread() {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .spread
+        viewModel.setProvider(FakeProvider(count: 10))
+        viewModel.goNext()
+        XCTAssertEqual(viewModel.pagesToLoad, [1, 2, 3, 4, 0])
+    }
+
+    func testCacheIsBoundedWhileReadingThroughBook() async {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        viewModel.setProvider(FakeProvider(count: 40))
+        for _ in 0..<39 {
+            viewModel.goNext()
+            await waitForLoads(viewModel)
+        }
+        XCTAssertEqual(viewModel.currentIndex, 39)
+        XCTAssertLessThanOrEqual(viewModel.cache.pages.count, ReaderViewModel.cacheCapacity)
+    }
+
+    func testRequiredPixelSizeFollowsContainer() {
+        let viewModel = makeViewModel()
+        viewModel.updateContainerSize(CGSize(width: 1000, height: 700), displayScale: 2)
+        XCTAssertEqual(viewModel.requiredPixelSize, 2048)
+        viewModel.updateContainerSize(CGSize(width: 1010, height: 700), displayScale: 2)
+        XCTAssertEqual(viewModel.requiredPixelSize, 2048, "少しの変化では読み直さない")
+        viewModel.updateContainerSize(CGSize(width: 400, height: 300), displayScale: 1)
+        XCTAssertEqual(viewModel.requiredPixelSize, 512)
+    }
+
+    private func waitForQueue(_ viewModel: ReaderViewModel, pages: Set<Int>) async {
+        for _ in 0..<400 {
+            if pages.isSubset(of: Set(viewModel.cache.pages)) { return }
+            try? await Task.sleep(nanoseconds: 5_000_000)
+        }
+        XCTFail("先読みが終わらない")
+    }
+
     func testCurrentPageIsKeptWhenSwitchingModes() {
         let viewModel = makeViewModel()
         viewModel.manualViewMode = .single
