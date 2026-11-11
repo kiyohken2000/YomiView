@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="YomiView/Resources/Assets.xcassets/AppIcon.appiconset/icon_256x256@2x.png" width="128" height="128" alt="YomiView のアイコン">
+  <img src="assets/icon.png" width="128" height="128" alt="YomiView のアイコン">
 </p>
 
 # YomiView
@@ -224,6 +224,11 @@ TEST_RUNNER_YOMIVIEW_SNAPSHOT_DIR=/tmp/yomiview-snap TEST_RUNNER_YOMIVIEW_SNAPSH
 5. 表示メニュー ▸「フルスクリーンで自動非表示モードを適用する」をオフにすると、フルスクリーンでも通常の画面構成になることを確認する
 
 自動非表示の見た目はスナップショット（autohide.png）でも確認できる。
+
+### 本の終端の通知
+
+1. 最後のページで → / ↓ / Space（右開きでは ←）を押すと、画面下に「最後のページです」と表示されることを確認する
+2. 最初のページで前のページへ移動しようとすると「最初のページです」と表示されること。End / Home で移動したときは表示されないこと
 
 ## 手動確認チェックリスト（計画書 7章）
 

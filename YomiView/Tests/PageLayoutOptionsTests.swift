@@ -339,3 +339,59 @@ final class SlideShowTests: XCTestCase {
         XCTAssertEqual(state.edges(at: CGPoint(x: 350, y: 400), in: size), [])
     }
 }
+
+/// 本の終端を越えようとしたときの通知（NeeView の Notice.LastPage / Notice.FirstPage）。
+@MainActor
+final class PageTerminalNoticeTests: XCTestCase {
+    private var defaults: UserDefaults!
+    private var suiteName: String!
+
+    override func setUp() {
+        suiteName = "YomiViewTests-\(UUID().uuidString)"
+        defaults = UserDefaults(suiteName: suiteName)
+    }
+
+    override func tearDown() {
+        defaults.removePersistentDomain(forName: suiteName)
+    }
+
+    private func makeViewModel() -> ReaderViewModel {
+        let viewModel = ReaderViewModel(settings: AppSettings(defaults: defaults), recentBooks: RecentBooksStore(defaults: defaults))
+        viewModel.manualViewMode = .single
+        viewModel.updateContainerSize(CGSize(width: 800, height: 1000))
+        viewModel.setProvider(FakeProvider(count: 2))
+        return viewModel
+    }
+
+    func testNoticeAtBothEnds() {
+        let viewModel = makeViewModel()
+        viewModel.goPrevious()
+        XCTAssertEqual(viewModel.infoMessage?.text, "最初のページです")
+        viewModel.goNext()
+        viewModel.goNext()
+        XCTAssertEqual(viewModel.currentIndex, 1)
+        XCTAssertEqual(viewModel.infoMessage?.text, "最後のページです")
+        // 右開きで ← は次のページ
+        viewModel.goLeft()
+        XCTAssertEqual(viewModel.infoMessage?.text, "最後のページです")
+    }
+
+    func testNoNoticeForHomeEndOrNormalMoves() {
+        let viewModel = makeViewModel()
+        viewModel.goNext()
+        viewModel.goLast()
+        viewModel.goPrevious()
+        viewModel.goFirst()
+        XCTAssertNil(viewModel.infoMessage)
+    }
+
+    func testNoNoticeDuringSlideShow() {
+        let viewModel = makeViewModel()
+        viewModel.settings.isSlideShowByLoop = false
+        viewModel.go(to: 1)
+        viewModel.startSlideShow()
+        viewModel.advanceSlideShow()
+        XCTAssertFalse(viewModel.isSlideShowPlaying)
+        XCTAssertNil(viewModel.infoMessage)
+    }
+}

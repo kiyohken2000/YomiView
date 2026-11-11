@@ -468,7 +468,12 @@ final class ReaderViewModel {
         let spreads = spreads
         guard let index = SpreadCalculator.spreadIndex(containing: currentIndex, part: currentPart, in: spreads) else { return }
         let target = index + offset
-        guard spreads.indices.contains(target) else { return }
+        guard spreads.indices.contains(target) else {
+            // 本の終端を越えようとしたら知らせる（NeeView の Notice.LastPage / Notice.FirstPage）。
+            // スライドショーはループするか停止するので知らせない（NeeView と同じ）
+            if !isSlideShowAdvancing { showInfo(offset > 0 ? "最後のページです" : "最初のページです") }
+            return
+        }
         move(to: spreads[target].first, part: spreads[target].part)
         scheduleLoads()
     }

@@ -28,6 +28,12 @@ targets:
       - path: YomiView
         excludes:
           - "Tests/**"
+          - "Resources/AppIcon.icon/**"
+          - "Resources/AppIcon.icon"
+      # Icon Composer のアイコン（macOS 26 以降の形式。古い macOS 用のアイコンも actool が作る）
+      - path: YomiView/Resources/AppIcon.icon
+        type: file
+        buildPhase: resources
     dependencies:
       - package: ZIPFoundation
     settings:
