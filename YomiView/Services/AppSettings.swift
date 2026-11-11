@@ -23,6 +23,7 @@ final class AppSettings {
         static let slideShowInterval = "slideShowInterval"
         static let isSlideShowByLoop = "isSlideShowByLoop"
         static let isAutoHideInFullScreen = "isAutoHideInFullScreen"
+        static let isRestoreLastPage = "isRestoreLastPage"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -112,6 +113,11 @@ final class AppSettings {
         didSet { defaults.set(isAutoHideInFullScreen, forKey: Key.isAutoHideInFullScreen) }
     }
 
+    /// 前に読んだことのある本を、最後に読んだページから開く（既定オフ。オフなら常に最初のページから開く）
+    var isRestoreLastPage: Bool {
+        didSet { defaults.set(isRestoreLastPage, forKey: Key.isRestoreLastPage) }
+    }
+
     var spreadOptions: SpreadCalculator.Options {
         SpreadCalculator.Options(
             coverSingle: coverSingle, landscapeSingle: landscapeSingle,
@@ -137,5 +143,6 @@ final class AppSettings {
         slideShowInterval = Self.clampInterval(defaults.object(forKey: Key.slideShowInterval) as? Double ?? 5)
         isSlideShowByLoop = defaults.object(forKey: Key.isSlideShowByLoop) as? Bool ?? true
         isAutoHideInFullScreen = defaults.object(forKey: Key.isAutoHideInFullScreen) as? Bool ?? true
+        isRestoreLastPage = defaults.object(forKey: Key.isRestoreLastPage) as? Bool ?? false
     }
 }

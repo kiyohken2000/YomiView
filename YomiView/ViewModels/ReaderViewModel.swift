@@ -255,15 +255,16 @@ final class ReaderViewModel {
         return true
     }
 
-    /// 本を開く。前に読んだことのある本なら、最後に読んだページと見開き設定を復元する。
+    /// 本を開く。前に読んだことのある本なら見開き設定を復元し、「最後に読んだページから開く」が
+    /// オンならそのページから、オフなら最初のページから開く。`startPage` を渡すとそのページから開く。
     /// 開いた本の親フォルダを本棚に表示し、本の履歴に記録する。
-    func open(_ url: URL, failure: FailureStyle = .alert, recordHistory: Bool = true) {
+    func open(_ url: URL, failure: FailureStyle = .alert, recordHistory: Bool = true, startPage: Int? = nil) {
         do {
             let provider = try BookSource.detect(url).makeProvider(recursiveFolder: settings.isRecursiveFolder)
             let saved = recentBooks.recordOpen(url)
             bookURL = nil
             manualViewMode = saved.viewMode
-            setProvider(provider, startIndex: saved.lastPage)
+            setProvider(provider, startIndex: startPage ?? (settings.isRestoreLastPage ? saved.lastPage : 0))
             bookURL = url
             savePosition()
             bookshelf.reveal(url)
@@ -384,7 +385,7 @@ final class ReaderViewModel {
     func applyRecursiveFolder() {
         guard let bookURL, let folder = baseProvider as? FolderPageProvider,
               folder.isRecursive != settings.isRecursiveFolder else { return }
-        open(bookURL, failure: .notice, recordHistory: false)
+        open(bookURL, failure: .notice, recordHistory: false, startPage: currentIndex)
     }
 
     /// 名前↑ は取得元の既定の並び（フォルダ・ZIP は自然順、PDF はページ順）なので並べ替えない

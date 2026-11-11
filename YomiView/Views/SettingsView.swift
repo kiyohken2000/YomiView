@@ -25,6 +25,7 @@ struct SettingsView: View {
                     ForEach(PageSortMode.allCases) { Text($0.label).tag($0) }
                 }
                 Toggle("フォルダのサブフォルダーを読み込む", isOn: $settings.isRecursiveFolder)
+                Toggle("前回開いたページから開く", isOn: $settings.isRestoreLastPage)
             }
 
             Section("スライドショー") {

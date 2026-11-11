@@ -167,6 +167,32 @@ final class ReaderViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.provider?.title, folder.lastPathComponent)
     }
 
+    func testReopeningStartsFromFirstPageUnlessRestoreIsOn() throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("YomiViewReopen-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        for i in 1...5 { try Data().write(to: folder.appendingPathComponent("\(i).png")) }
+
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .single
+        XCTAssertFalse(viewModel.settings.isRestoreLastPage, "既定では読書位置を復元しない")
+        viewModel.open(folder)
+        viewModel.goNext()
+        viewModel.goNext()
+        XCTAssertEqual(viewModel.currentIndex, 2)
+
+        viewModel.open(folder)
+        XCTAssertEqual(viewModel.currentIndex, 0, "開き直すと最初のページから")
+        XCTAssertEqual(viewModel.viewMode, .single, "見開き設定は復元する")
+
+        viewModel.goNext()
+        viewModel.goNext()
+        viewModel.settings.isRestoreLastPage = true
+        viewModel.open(folder)
+        XCTAssertEqual(viewModel.currentIndex, 2, "設定をオンにすると最後に読んだページから")
+    }
+
     // MARK: - 見開き
 
     func testViewModeFollowsContainerShapeUntilToggledManually() {
