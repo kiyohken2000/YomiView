@@ -1,0 +1,13 @@
+# 参考ソース（コミットしない）
+_temp/
+
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+.swiftpm/

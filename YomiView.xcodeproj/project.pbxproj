@@ -1,0 +1,485 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		50F7F33EB895A1CCE92B8E3E /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B76CC7D4853A8CA725860C7 /* ReaderView.swift */; };
+		534B3F0DDF3F473297EE13A1 /* YomiViewApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEE5E5C37E592396C93B9469 /* YomiViewApp.swift */; };
+		543FA56B5F4D01FBA49E79D3 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 48D112662AC057A6ACD786E5 /* ZIPFoundation */; };
+		7473382A1F0905C73FFC5DFC /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = AD48062AF1BF7FFA5E211CE1 /* ZIPFoundation */; };
+		E567775DB0E8785BE8F18E22 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E73F0008FF7F2B07EEA1323A /* SmokeTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B9190A8F3D4BC90763E7CEC3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E7AC70A88BE6B5118929EF56 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3FF72E599B6DFE43ED84941B;
+			remoteInfo = YomiView;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		6B76CC7D4853A8CA725860C7 /* ReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderView.swift; sourceTree = "<group>"; };
+		8C330B625AE29940EB738121 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		9C6237D0A21D52AF5A1D5D99 /* YomiViewTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YomiViewTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DEDEDF841B1AF20645BFCE2E /* YomiView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YomiView.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E73F0008FF7F2B07EEA1323A /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
+		EEE5E5C37E592396C93B9469 /* YomiViewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YomiViewApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5915F5CE18DDC5A224041929 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				543FA56B5F4D01FBA49E79D3 /* ZIPFoundation in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C5AD447FA37CE8BC0018B6F5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7473382A1F0905C73FFC5DFC /* ZIPFoundation in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2AAF8CDBBCCB125E0EE406FB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DEDEDF841B1AF20645BFCE2E /* YomiView.app */,
+				9C6237D0A21D52AF5A1D5D99 /* YomiViewTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8F2AF7F7FF4274FCD86F269F /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8C330B625AE29940EB738121 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		9E801EDC7838F2BFCB310069 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				EEE5E5C37E592396C93B9469 /* YomiViewApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A83CE940C412766109726FE7 /* YomiView */ = {
+			isa = PBXGroup;
+			children = (
+				9E801EDC7838F2BFCB310069 /* App */,
+				8F2AF7F7FF4274FCD86F269F /* Resources */,
+				F94FF45DCF9BE784FD97873D /* Tests */,
+				D8EA5726D45468F7A4F15010 /* Views */,
+			);
+			path = YomiView;
+			sourceTree = "<group>";
+		};
+		B589947ADF20CA800AE74B62 = {
+			isa = PBXGroup;
+			children = (
+				A83CE940C412766109726FE7 /* YomiView */,
+				2AAF8CDBBCCB125E0EE406FB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D8EA5726D45468F7A4F15010 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				6B76CC7D4853A8CA725860C7 /* ReaderView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		F94FF45DCF9BE784FD97873D /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				E73F0008FF7F2B07EEA1323A /* SmokeTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3FF72E599B6DFE43ED84941B /* YomiView */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7F589D24AC2C1AC0E7B9F490 /* Build configuration list for PBXNativeTarget "YomiView" */;
+			buildPhases = (
+				C0EC23F9E281863449235BAF /* Sources */,
+				5915F5CE18DDC5A224041929 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = YomiView;
+			packageProductDependencies = (
+				48D112662AC057A6ACD786E5 /* ZIPFoundation */,
+			);
+			productName = YomiView;
+			productReference = DEDEDF841B1AF20645BFCE2E /* YomiView.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C4876B75C8826A9CB142F2B9 /* YomiViewTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7B8E5E40424E6EFF6A4F6A89 /* Build configuration list for PBXNativeTarget "YomiViewTests" */;
+			buildPhases = (
+				A8BAEFD79BB75CCC8F46D598 /* Sources */,
+				C5AD447FA37CE8BC0018B6F5 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4CBBDD46EBB29F9EF3D63447 /* PBXTargetDependency */,
+			);
+			name = YomiViewTests;
+			packageProductDependencies = (
+				AD48062AF1BF7FFA5E211CE1 /* ZIPFoundation */,
+			);
+			productName = YomiViewTests;
+			productReference = 9C6237D0A21D52AF5A1D5D99 /* YomiViewTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E7AC70A88BE6B5118929EF56 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					3FF72E599B6DFE43ED84941B = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
+					};
+					C4876B75C8826A9CB142F2B9 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = FD2187A09275D0F8E5537204 /* Build configuration list for PBXProject "YomiView" */;
+			developmentRegion = ja;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				ja,
+			);
+			mainGroup = B589947ADF20CA800AE74B62;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7090BE967E53322C05C44DBC /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 2AAF8CDBBCCB125E0EE406FB /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3FF72E599B6DFE43ED84941B /* YomiView */,
+				C4876B75C8826A9CB142F2B9 /* YomiViewTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A8BAEFD79BB75CCC8F46D598 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E567775DB0E8785BE8F18E22 /* SmokeTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0EC23F9E281863449235BAF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				50F7F33EB895A1CCE92B8E3E /* ReaderView.swift in Sources */,
+				534B3F0DDF3F473297EE13A1 /* YomiViewApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4CBBDD46EBB29F9EF3D63447 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3FF72E599B6DFE43ED84941B /* YomiView */;
+			targetProxy = B9190A8F3D4BC90763E7CEC3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		01451E03C6AE291A3B5B9BF1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.yomiview.YomiViewTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YomiView.app/Contents/MacOS/YomiView";
+			};
+			name = Release;
+		};
+		0B01AF1DADD465A83D15FC9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = YomiView/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.yomiview.YomiView;
+				PRODUCT_NAME = YomiView;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		25337266246BC20CBF9E194D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		93D5D981699F482DB4215671 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		C6FD30FF2677BC404A184409 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.yomiview.YomiViewTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YomiView.app/Contents/MacOS/YomiView";
+			};
+			name = Debug;
+		};
+		DF9F37E0C5C1032222829313 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = YomiView/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.yomiview.YomiView;
+				PRODUCT_NAME = YomiView;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7B8E5E40424E6EFF6A4F6A89 /* Build configuration list for PBXNativeTarget "YomiViewTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C6FD30FF2677BC404A184409 /* Debug */,
+				01451E03C6AE291A3B5B9BF1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7F589D24AC2C1AC0E7B9F490 /* Build configuration list for PBXNativeTarget "YomiView" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0B01AF1DADD465A83D15FC9A /* Debug */,
+				DF9F37E0C5C1032222829313 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FD2187A09275D0F8E5537204 /* Build configuration list for PBXProject "YomiView" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				93D5D981699F482DB4215671 /* Debug */,
+				25337266246BC20CBF9E194D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7090BE967E53322C05C44DBC /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.19;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		48D112662AC057A6ACD786E5 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7090BE967E53322C05C44DBC /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+		AD48062AF1BF7FFA5E211CE1 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7090BE967E53322C05C44DBC /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = E7AC70A88BE6B5118929EF56 /* Project object */;
+}
