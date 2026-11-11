@@ -25,6 +25,18 @@ struct ReaderView: View {
                 sidePanel(on: .right)
                 SideBarView(side: .right, layout: panelLayout)
             }
+            if viewModel.settings.isFilmStripVisible, viewModel.isBookOpen {
+                FilmStripView(viewModel: viewModel)
+                    .background {
+                        // フィルムストリップの上のホイールはページ送り（NeeView の既定 MoveSelection）
+                        ScrollWheelMonitor(isEnabled: true) { action in
+                            switch action {
+                            case .next: viewModel.goNext()
+                            case .previous: viewModel.goPrevious()
+                            }
+                        }
+                    }
+            }
             PageSliderView(
                 pageCount: viewModel.pageCount,
                 currentPage: viewModel.currentSpread?.first ?? 0,
@@ -82,6 +94,8 @@ struct ReaderView: View {
         switch panel {
         case .bookshelf:
             BookshelfPanelView(bookshelf: viewModel.bookshelf, viewModel: viewModel)
+        case .pageList:
+            PageListPanelView(viewModel: viewModel)
         case .history:
             HistoryPanelView(recentBooks: recentBooks, viewModel: viewModel)
         }

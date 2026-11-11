@@ -17,6 +17,7 @@ YomiView は Windows 向け画像ビューア「NeeView」（Copyright (c) 2016-
 | `YomiView/Views/Theme.swift` | `NeeView/Libraries/Themes/DarkTheme.json` | ダークテーマの配色 |
 | `YomiView/Services/Bookshelf.swift` | `NeeView/SidePanels/Bookshelf/FolderList/FolderOrder.cs`、`FolderCollection.cs`、`FolderList.cs` | 本棚の並び順、フォルダを先に並べる規則、前後の本への移動 |
 | `YomiView/Views/BookshelfPanelView.swift` | `NeeView/SidePanels/Bookshelf/FolderListView.xaml`、`FolderListBox.xaml.cs` | 本棚パネルの構成とクリック・ダブルクリックの動作 |
+| `YomiView/Services/ThumbnailStore.swift`、`Views/FilmStripView.swift`、`Views/PageListPanelView.swift` | `NeeView/Config/ThumbnailConfig.cs`、`Config/FilmStripConfig.cs`、`PageSelect/FilmStrip`、`SidePanels/PageList` | サムネイルの大きさと保持数、フィルムストリップとページリストの構成 |
 | 表示文言 | `NeeView/Languages/ja.restext` | 「本棚」「名前↑」「次のブックはありません」などの日本語表示 |
 | `YomiView/Views/ReaderView.swift`、`AddressBarView.swift`、`SidePanelFrame.swift`、`PageSliderView.swift` | `NeeView/MainWindow/MainWindow.xaml`、`NeeView/AddressBar/AddressBarView.xaml`、`NeeView/PageSelect/PageSlider/PageSliderView.xaml` | 画面構成（アドレスバー、サイドパネル、ページスライダーの配置） |
 

@@ -155,11 +155,17 @@ private struct BookshelfRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 26))
-                .foregroundStyle(item.isFolder ? Color(hex: 0xF8D775) : Theme.thumbnailForeground)
-                .frame(width: 48, height: 48)
-                .background(Theme.thumbnailBackground.opacity(item.isFolder ? 0 : 1))
+            // フォルダも本として開けるなら表紙のサムネイル、開けなければフォルダのアイコン
+            Group {
+                if item.isFolder && BookThumbnails.shared.hasFailed(item.url.path) {
+                    Image(systemName: "folder.fill")
+                        .font(.system(size: 30))
+                        .foregroundStyle(Color(hex: 0xF8D775))
+                } else {
+                    ThumbnailView(store: BookThumbnails.shared, key: item.url.path, placeholderSymbol: icon)
+                }
+            }
+            .frame(width: 48, height: 48)
             VStack(alignment: .leading, spacing: 2) {
                 Text(Self.dateFormatter.string(from: item.modified))
                     .font(.system(size: 11))

@@ -3,6 +3,7 @@ import SwiftUI
 /// サイドパネルの種類。NeeView の既定の配置（左：本棚・ページリスト・履歴、右：ファイル情報・ナビゲーター・ブックマーク）に合わせる。
 enum SidePanelKind: String, CaseIterable, Identifiable {
     case bookshelf
+    case pageList
     case history
 
     var id: String { rawValue }
@@ -11,13 +12,14 @@ enum SidePanelKind: String, CaseIterable, Identifiable {
 
     var side: Side {
         switch self {
-        case .bookshelf, .history: return .left
+        case .bookshelf, .pageList, .history: return .left
         }
     }
 
     var title: String {
         switch self {
         case .bookshelf: return "本棚"
+        case .pageList: return "ページリスト"
         case .history: return "履歴"
         }
     }
@@ -25,6 +27,7 @@ enum SidePanelKind: String, CaseIterable, Identifiable {
     var systemImage: String {
         switch self {
         case .bookshelf: return "books.vertical"
+        case .pageList: return "photo"
         case .history: return "clock.arrow.circlepath"
         }
     }
@@ -33,6 +36,7 @@ enum SidePanelKind: String, CaseIterable, Identifiable {
     var toggleKey: Character? {
         switch self {
         case .bookshelf: return "b"
+        case .pageList: return "p"
         case .history: return "h"
         }
     }

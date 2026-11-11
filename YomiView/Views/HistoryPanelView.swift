@@ -18,9 +18,11 @@ struct HistoryPanelView: View {
                         PanelListRow(
                             title: entry.displayName,
                             subtitle: entry.url.deletingLastPathComponent().path,
-                            isSelected: viewModel.bookURL.map(RecentBooksStore.normalizedPath(of:)) == entry.path
+                            isSelected: viewModel.bookURL.map(RecentBooksStore.normalizedPath(of:)) == entry.path,
+                            action: { viewModel.open(entry.url) }
                         ) {
-                            viewModel.open(entry.url)
+                            ThumbnailView(store: BookThumbnails.shared, key: entry.path, placeholderSymbol: "book.closed")
+                                .frame(width: 48, height: 48)
                         }
                     }
                 }

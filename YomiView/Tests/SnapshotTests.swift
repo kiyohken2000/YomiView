@@ -25,16 +25,17 @@ final class SnapshotTests: XCTestCase {
         let settings = AppSettings(defaults: defaults)
         let recentBooks = RecentBooksStore(defaults: defaults)
 
-        for (name, size, left, right, mode) in [
-            ("spread-panels", CGSize(width: 1280, height: 800), SidePanelKind.allCases.first { $0.side == .left },
-             SidePanelKind.allCases.first { $0.side == .right }, ViewMode?.none),
-            ("single", CGSize(width: 800, height: 1000), nil, nil, ViewMode?.none),
-        ] {
+        let snapshots: [(String, CGSize, SidePanelKind?, SidePanelKind?, Bool)] = [
+            ("spread-panels", CGSize(width: 1280, height: 800), .bookshelf, nil, true),
+            ("pagelist", CGSize(width: 1280, height: 800), .pageList, nil, false),
+            ("single", CGSize(width: 800, height: 1000), nil, nil, false),
+        ]
+        for (name, size, left, right, filmStrip) in snapshots {
             layout.left = left
             layout.right = right
+            settings.isFilmStripVisible = filmStrip
             let viewModel = ReaderViewModel(settings: settings, recentBooks: recentBooks)
             viewModel.open(URL(fileURLWithPath: book))
-            viewModel.manualViewMode = mode
             viewModel.goNext()
             let window = NSWindow(
                 contentRect: CGRect(origin: .zero, size: size),

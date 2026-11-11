@@ -87,6 +87,10 @@ final class ReaderViewModel {
     static let prefetchCount = 2
 
     @ObservationIgnored let cache = ImageCache(capacity: cacheCapacity)
+    /// ページのサムネイル（フィルムストリップとページリスト用）
+    @ObservationIgnored let pageThumbnails = ThumbnailStore<Int>(capacity: 100) { _ in
+        throw BookError.pageOutOfRange(0)
+    }
     @ObservationIgnored private var loadQueue: [Int] = []
     @ObservationIgnored private var loaderTask: Task<Void, Never>?
 
@@ -304,6 +308,9 @@ final class ReaderViewModel {
         loadQueue = []
         cache.removeAll()
         cacheRevision += 1
+        pageThumbnails.reset { index in
+            try provider.loadImage(at: index, maxPixelSize: ThumbnailSize.pixels).cgImage
+        }
         failedPages = [:]
         widePages = [:]
         self.provider = provider

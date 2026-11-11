@@ -69,6 +69,8 @@ struct ReaderCommands: Commands {
                 AppSettings.shared.readingDirection = AppSettings.shared.readingDirection.toggled
             }
             Divider()
+            Toggle("フィルムストリップ", isOn: Bindable(AppSettings.shared).isFilmStripVisible)
+            Divider()
             Button("ウィンドウに合わせる") { viewModel?.zoomMode = .fit }
                 .keyboardShortcut("9", modifiers: .command)
                 .disabled(viewModel == nil || viewModel?.zoomMode == .fit)

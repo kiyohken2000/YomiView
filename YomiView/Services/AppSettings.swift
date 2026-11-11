@@ -11,6 +11,7 @@ final class AppSettings {
         static let readingDirection = "readingDirection"
         static let coverSingle = "coverSingle"
         static let landscapeSingle = "landscapeSingle"
+        static let isFilmStripVisible = "isFilmStripVisible"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -30,6 +31,11 @@ final class AppSettings {
         didSet { defaults.set(landscapeSingle, forKey: Key.landscapeSingle) }
     }
 
+    /// フィルムストリップを表示する（NeeView の既定どおりオフ）
+    var isFilmStripVisible: Bool {
+        didSet { defaults.set(isFilmStripVisible, forKey: Key.isFilmStripVisible) }
+    }
+
     var spreadOptions: SpreadCalculator.Options {
         SpreadCalculator.Options(coverSingle: coverSingle, landscapeSingle: landscapeSingle)
     }
@@ -40,5 +46,6 @@ final class AppSettings {
             .flatMap(ReadingDirection.init(rawValue:)) ?? .rightToLeft
         coverSingle = defaults.object(forKey: Key.coverSingle) as? Bool ?? true
         landscapeSingle = defaults.object(forKey: Key.landscapeSingle) as? Bool ?? true
+        isFilmStripVisible = defaults.object(forKey: Key.isFilmStripVisible) as? Bool ?? false
     }
 }
