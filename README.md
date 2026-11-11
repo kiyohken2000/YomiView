@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="YomiView/Resources/Assets.xcassets/AppIcon.appiconset/icon_256x256@2x.png" width="128" height="128" alt="YomiView のアイコン">
+</p>
+
 # YomiView
 
 macOS 向けの画像・漫画ビューア。フォルダや ZIP / CBZ を「本」として開き、ページ単位で閲覧します。
