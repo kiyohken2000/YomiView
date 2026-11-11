@@ -10,10 +10,14 @@ struct YomiViewApp: App {
         .commands {
             ReaderCommands()
         }
+
+        Settings {
+            SettingsView(settings: .shared)
+        }
     }
 }
 
-/// ファイルメニュー。
+/// ファイル・表示メニュー。
 struct ReaderCommands: Commands {
     @FocusedValue(\.readerViewModel) private var viewModel
 
@@ -22,6 +26,16 @@ struct ReaderCommands: Commands {
             Button("開く…") { viewModel?.presentOpenPanel() }
                 .keyboardShortcut("o", modifiers: .command)
                 .disabled(viewModel == nil)
+        }
+        CommandGroup(before: .toolbar) {
+            Button(viewModel?.viewMode == .spread ? "1ページ表示にする（M）" : "見開き表示にする（M）") {
+                viewModel?.toggleViewMode()
+            }
+            .disabled(viewModel == nil)
+            Button(AppSettings.shared.readingDirection == .rightToLeft ? "左開きにする（D）" : "右開きにする（D）") {
+                AppSettings.shared.readingDirection = AppSettings.shared.readingDirection.toggled
+            }
+            Divider()
         }
     }
 }

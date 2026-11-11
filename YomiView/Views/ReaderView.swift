@@ -9,9 +9,16 @@ struct ReaderView: View {
         ZStack {
             Color.black
             if viewModel.isBookOpen {
-                PageImageView(state: viewModel.pageState)
+                SpreadView(pages: viewModel.displayedPages.map { ($0, viewModel.state(of: $0)) })
             } else {
                 emptyBookView
+            }
+        }
+        .background {
+            GeometryReader { geometry in
+                Color.clear
+                    .onAppear { viewModel.updateContainerSize(geometry.size) }
+                    .onChange(of: geometry.size) { _, size in viewModel.updateContainerSize(size) }
             }
         }
         .frame(minWidth: 400, minHeight: 300)
@@ -20,12 +27,22 @@ struct ReaderView: View {
         .focusEffectDisabled()
         .focused($isFocused)
         .onAppear { isFocused = true }
+        .onChange(of: viewModel.currentSpread) { viewModel.scheduleLoads() }
         .onKeyPress(.rightArrow) {
-            viewModel.goNext()
+            viewModel.goRight()
             return .handled
         }
         .onKeyPress(.leftArrow) {
-            viewModel.goPrevious()
+            viewModel.goLeft()
+            return .handled
+        }
+        .onKeyPress(characters: CharacterSet(charactersIn: "mMdD")) { press in
+            guard press.modifiers.subtracting(.shift).isEmpty else { return .ignored }
+            switch press.characters.lowercased() {
+            case "m": viewModel.toggleViewMode()
+            case "d": viewModel.toggleReadingDirection()
+            default: return .ignored
+            }
             return .handled
         }
         .focusedSceneValue(\.readerViewModel, viewModel)
