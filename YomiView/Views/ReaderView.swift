@@ -13,45 +13,23 @@ struct ReaderView: View {
     @State private var loupeAnchor: UnitPoint = .center
     @State private var hoverLocation: CGPoint = .zero
     @State private var magnifyBase: CGFloat?
+    @State private var isFullScreen = false
+    @State private var autoHide = AutoHideState()
+    @State private var autoHideTasks: [AutoHideState.Edge: Task<Void, Never>] = [:]
     private let panelLayout: SidePanelLayout
     private var recentBooks: RecentBooksStore { viewModel.recentBooks }
 
-    init(viewModel: ReaderViewModel? = nil, panelLayout: SidePanelLayout? = nil) {
+    /// - Parameter isFullScreen: フルスクリーンとして表示を始める（スナップショット用）
+    init(viewModel: ReaderViewModel? = nil, panelLayout: SidePanelLayout? = nil, isFullScreen: Bool = false) {
         _viewModel = State(initialValue: viewModel ?? ReaderViewModel())
+        _isFullScreen = State(initialValue: isFullScreen)
         self.panelLayout = panelLayout ?? .shared
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            AddressBarView(viewModel: viewModel) { isFocused = true }
-            HStack(spacing: 0) {
-                SideBarView(side: .left, layout: panelLayout)
-                sidePanel(on: .left)
-                mainView
-                sidePanel(on: .right)
-                SideBarView(side: .right, layout: panelLayout)
-            }
-            if viewModel.settings.isFilmStripVisible, viewModel.isBookOpen {
-                FilmStripView(viewModel: viewModel)
-                    .background {
-                        // フィルムストリップの上のホイールはページ送り（NeeView の既定 MoveSelection）
-                        ScrollWheelMonitor(isEnabled: true) { action in
-                            switch action {
-                            case .next: viewModel.goNext()
-                            case .previous: viewModel.goPrevious()
-                            }
-                        }
-                    }
-            }
-            PageSliderView(
-                pageCount: viewModel.pageCount,
-                currentPage: viewModel.currentSpread?.first ?? 0,
-                isReversed: viewModel.readingDirection == .rightToLeft
-            ) { page in
-                viewModel.go(to: page)
-            }
-        }
+        layout
         .background(Theme.windowBackground)
+        .background { FullScreenObserver { isFullScreen = $0 } }
         .preferredColorScheme(.dark)
         .frame(minWidth: 500, minHeight: 360)
         .navigationTitle(viewModel.windowTitle)
@@ -77,6 +55,143 @@ struct ReaderView: View {
             Button("OK") {}
         } message: { message in
             Text(message)
+        }
+    }
+
+    // MARK: - 画面構成
+
+    /// フルスクリーンで自動非表示にするか
+    private var isAutoHiding: Bool {
+        isFullScreen && viewModel.settings.isAutoHideInFullScreen
+    }
+
+    @ViewBuilder
+    private var layout: some View {
+        if isAutoHiding {
+            autoHideLayout
+        } else {
+            VStack(spacing: 0) {
+                addressBar
+                HStack(spacing: 0) {
+                    leftPanels
+                    mainView
+                    rightPanels
+                }
+                bottomBars
+            }
+        }
+    }
+
+    private var addressBar: some View {
+        AddressBarView(viewModel: viewModel) { isFocused = true }
+    }
+
+    private var leftPanels: some View {
+        HStack(spacing: 0) {
+            SideBarView(side: .left, layout: panelLayout)
+            sidePanel(on: .left)
+        }
+    }
+
+    private var rightPanels: some View {
+        HStack(spacing: 0) {
+            sidePanel(on: .right)
+            SideBarView(side: .right, layout: panelLayout)
+        }
+    }
+
+    private var bottomBars: some View {
+        VStack(spacing: 0) {
+            if viewModel.settings.isFilmStripVisible, viewModel.isBookOpen {
+                FilmStripView(viewModel: viewModel)
+                    .background {
+                        // フィルムストリップの上のホイールはページ送り（NeeView の既定 MoveSelection）
+                        ScrollWheelMonitor(isEnabled: true) { action in
+                            switch action {
+                            case .next: viewModel.goNext()
+                            case .previous: viewModel.goPrevious()
+                            }
+                        }
+                    }
+            }
+            PageSliderView(
+                pageCount: viewModel.pageCount,
+                currentPage: viewModel.currentSpread?.first ?? 0,
+                isReversed: viewModel.readingDirection == .rightToLeft
+            ) { page in
+                viewModel.go(to: page)
+            }
+        }
+    }
+
+    /// フルスクリーンの自動非表示：本を画面いっぱいに表示し、端にマウスを近づけたときだけ
+    /// アドレスバー・サイドパネル・フィルムストリップ・ページスライダーを本の上に重ねて表示する（NeeView の AutoHide）。
+    private var autoHideLayout: some View {
+        GeometryReader { geometry in
+            autoHideContent
+                .onContinuousHover { phase in
+                    switch phase {
+                    case .active(let location): updateAutoHide(at: location, in: geometry.size)
+                    case .ended: updateAutoHide(at: nil, in: geometry.size)
+                    }
+                }
+        }
+        .onDisappear {
+            autoHideTasks.values.forEach { $0.cancel() }
+            autoHideTasks = [:]
+            autoHide.visible = []
+        }
+    }
+
+    private var autoHideContent: some View {
+        ZStack {
+            mainView
+            HStack(spacing: 0) {
+                if autoHide.visible.contains(.left) {
+                    leftPanels
+                        .measureDepth(\.width) { autoHide.depths[.left] = $0 }
+                        .transition(.move(edge: .leading))
+                }
+                Spacer(minLength: 0)
+                if autoHide.visible.contains(.right) {
+                    rightPanels
+                        .measureDepth(\.width) { autoHide.depths[.right] = $0 }
+                        .transition(.move(edge: .trailing))
+                }
+            }
+            VStack(spacing: 0) {
+                if autoHide.visible.contains(.top) {
+                    addressBar
+                        .measureDepth(\.height) { autoHide.depths[.top] = $0 }
+                        .transition(.move(edge: .top))
+                }
+                Spacer(minLength: 0)
+                if autoHide.visible.contains(.bottom) {
+                    bottomBars
+                        .measureDepth(\.height) { autoHide.depths[.bottom] = $0 }
+                        .transition(.move(edge: .bottom))
+                }
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: autoHide.visible)
+    }
+
+    /// マウスの位置に合わせて端の表示を変える。表示はすぐに、隠すのは少し待ってから。
+    private func updateAutoHide(at location: CGPoint?, in size: CGSize) {
+        let wanted = autoHide.edges(at: location, in: size)
+        for edge in AutoHideState.Edge.allCases {
+            if wanted.contains(edge) {
+                autoHideTasks[edge]?.cancel()
+                autoHideTasks[edge] = nil
+                if !autoHide.visible.contains(edge) { autoHide.visible.insert(edge) }
+            } else if autoHide.visible.contains(edge), autoHideTasks[edge] == nil {
+                autoHideTasks[edge] = Task {
+                    try? await Task.sleep(nanoseconds: AutoHideState.hideDelay)
+                    guard !Task.isCancelled else { return }
+                    autoHide.visible.remove(edge)
+                    autoHideTasks[edge] = nil
+                }
+            }
         }
     }
 
@@ -163,6 +278,7 @@ struct ReaderView: View {
         }
         .background {
             ScrollWheelMonitor(isEnabled: viewModel.isBookOpen) { action in
+                viewModel.resetSlideShowTimer()
                 viewModel.scroll(action)
             }
         }
@@ -239,6 +355,7 @@ struct ReaderView: View {
                 dragState = state
             }
             .onEnded { _ in
+                viewModel.resetSlideShowTimer()
                 longPressTask?.cancel()
                 viewModel.isLoupeActive = false
                 dragState = nil
@@ -277,6 +394,7 @@ struct ReaderView: View {
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
         // ⌘・⌃・⌥ 付きはメニューのショートカットなどに任せる
         guard press.modifiers.isDisjoint(with: [.command, .control, .option]) else { return .ignored }
+        viewModel.resetSlideShowTimer()
         let isRepeat = press.phase == .repeat
         switch press.key {
         case .rightArrow: viewModel.goRight()
@@ -325,5 +443,18 @@ extension FocusedValues {
     var readerViewModel: ReaderViewModel? {
         get { self[ReaderViewModelKey.self] }
         set { self[ReaderViewModelKey.self] = newValue }
+    }
+}
+
+private extension View {
+    /// 端からの奥行き（幅または高さ）を測って知らせる
+    func measureDepth(_ keyPath: KeyPath<CGSize, CGFloat>, _ action: @escaping (CGFloat) -> Void) -> some View {
+        background {
+            GeometryReader { geometry in
+                Color.clear
+                    .onAppear { action(geometry.size[keyPath: keyPath]) }
+                    .onChange(of: geometry.size[keyPath: keyPath]) { _, value in action(value) }
+            }
+        }
     }
 }

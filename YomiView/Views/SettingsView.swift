@@ -26,6 +26,23 @@ struct SettingsView: View {
                 }
                 Toggle("フォルダのサブフォルダーを読み込む", isOn: $settings.isRecursiveFolder)
             }
+
+            Section("スライドショー") {
+                LabeledContent("スライドを切り替える時間 (秒)") {
+                    HStack {
+                        TextField("", value: $settings.slideShowInterval, format: .number.precision(.fractionLength(0...1)))
+                            .frame(width: 60)
+                            .multilineTextAlignment(.trailing)
+                        Stepper("", value: $settings.slideShowInterval, in: AppSettings.slideShowIntervalRange, step: 0.5)
+                            .labelsHidden()
+                    }
+                }
+                Toggle("ループ再生", isOn: $settings.isSlideShowByLoop)
+            }
+
+            Section("ウィンドウ") {
+                Toggle("フルスクリーンで自動非表示モードを適用する", isOn: $settings.isAutoHideInFullScreen)
+            }
         }
         .formStyle(.grouped)
         .frame(width: 420)

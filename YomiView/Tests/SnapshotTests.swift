@@ -30,6 +30,8 @@ final class SnapshotTests: XCTestCase {
             ("spread-panels", CGSize(width: 1280, height: 800), .bookshelf, .fileInfo, true, { _ in }),
             ("pagelist", CGSize(width: 1280, height: 800), .pageList, nil, false, { _ in }),
             ("single", CGSize(width: 800, height: 1000), nil, nil, false, { _ in }),
+            // フルスクリーンの自動非表示：パネルを開いていても本だけが画面いっぱいに表示される
+            ("autohide", CGSize(width: 1280, height: 800), .bookshelf, .navigator, true, { _ in }),
             ("navigator", CGSize(width: 1280, height: 800), nil, .navigator, false, { viewModel in
                 viewModel.settings.background = .checkDark
                 viewModel.rotateRight()
@@ -64,7 +66,9 @@ final class SnapshotTests: XCTestCase {
                 contentRect: CGRect(origin: .zero, size: size),
                 styleMask: [.titled, .resizable], backing: .buffered, defer: false
             )
-            window.contentView = NSHostingView(rootView: ReaderView(viewModel: viewModel, panelLayout: layout))
+            window.contentView = NSHostingView(rootView: ReaderView(
+                viewModel: viewModel, panelLayout: layout, isFullScreen: name == "autohide"
+            ))
             window.appearance = NSAppearance(named: .darkAqua)
             window.orderFront(nil)
             for _ in 0..<30 {

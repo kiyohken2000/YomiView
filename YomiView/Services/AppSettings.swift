@@ -20,6 +20,9 @@ final class AppSettings {
         static let dividePage = "dividePage"
         static let pageSortMode = "pageSortMode"
         static let isRecursiveFolder = "isRecursiveFolder"
+        static let slideShowInterval = "slideShowInterval"
+        static let isSlideShowByLoop = "isSlideShowByLoop"
+        static let isAutoHideInFullScreen = "isAutoHideInFullScreen"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -84,6 +87,31 @@ final class AppSettings {
         didSet { defaults.set(isRecursiveFolder, forKey: Key.isRecursiveFolder) }
     }
 
+    /// スライドを切り替える時間（秒。NeeView の既定 5 秒、0.1〜30 秒）
+    var slideShowInterval: Double {
+        didSet {
+            let clamped = Self.clampInterval(slideShowInterval)
+            if clamped != slideShowInterval { slideShowInterval = clamped; return }
+            defaults.set(slideShowInterval, forKey: Key.slideShowInterval)
+        }
+    }
+
+    static let slideShowIntervalRange: ClosedRange<Double> = 0.1...30
+
+    private static func clampInterval(_ value: Double) -> Double {
+        min(slideShowIntervalRange.upperBound, max(slideShowIntervalRange.lowerBound, value))
+    }
+
+    /// スライドショーのループ再生（最後まで再生したら先頭に戻る。NeeView の既定オン）
+    var isSlideShowByLoop: Bool {
+        didSet { defaults.set(isSlideShowByLoop, forKey: Key.isSlideShowByLoop) }
+    }
+
+    /// フルスクリーンでアドレスバー・パネル・スライダーを自動的に隠す（NeeView の既定オン）
+    var isAutoHideInFullScreen: Bool {
+        didSet { defaults.set(isAutoHideInFullScreen, forKey: Key.isAutoHideInFullScreen) }
+    }
+
     var spreadOptions: SpreadCalculator.Options {
         SpreadCalculator.Options(
             coverSingle: coverSingle, landscapeSingle: landscapeSingle,
@@ -106,5 +134,8 @@ final class AppSettings {
         dividePage = defaults.object(forKey: Key.dividePage) as? Bool ?? false
         pageSortMode = defaults.string(forKey: Key.pageSortMode).flatMap(PageSortMode.init(rawValue:)) ?? .fileName
         isRecursiveFolder = defaults.object(forKey: Key.isRecursiveFolder) as? Bool ?? false
+        slideShowInterval = Self.clampInterval(defaults.object(forKey: Key.slideShowInterval) as? Double ?? 5)
+        isSlideShowByLoop = defaults.object(forKey: Key.isSlideShowByLoop) as? Bool ?? true
+        isAutoHideInFullScreen = defaults.object(forKey: Key.isAutoHideInFullScreen) as? Bool ?? true
     }
 }

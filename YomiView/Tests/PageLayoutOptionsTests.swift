@@ -242,3 +242,100 @@ final class PageLayoutViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.provider?.pages.map(\.name), ["2.png", "1.png", "0.png"])
     }
 }
+
+/// phase-14：スライドショーとフルスクリーンの自動非表示。
+@MainActor
+final class SlideShowTests: XCTestCase {
+    private var defaults: UserDefaults!
+    private var suiteName: String!
+
+    override func setUp() {
+        suiteName = "YomiViewTests-\(UUID().uuidString)"
+        defaults = UserDefaults(suiteName: suiteName)
+    }
+
+    override func tearDown() {
+        defaults.removePersistentDomain(forName: suiteName)
+    }
+
+    private func makeViewModel(count: Int = 3) -> ReaderViewModel {
+        let settings = AppSettings(defaults: defaults)
+        let viewModel = ReaderViewModel(settings: settings, recentBooks: RecentBooksStore(defaults: defaults))
+        viewModel.manualViewMode = .single
+        viewModel.updateContainerSize(CGSize(width: 800, height: 1000))
+        viewModel.setProvider(FakeProvider(count: count))
+        return viewModel
+    }
+
+    func testDefaults() {
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertEqual(settings.slideShowInterval, 5)
+        XCTAssertTrue(settings.isSlideShowByLoop)
+        XCTAssertTrue(settings.isAutoHideInFullScreen)
+        settings.slideShowInterval = 100
+        XCTAssertEqual(settings.slideShowInterval, 30)
+        settings.slideShowInterval = 0
+        XCTAssertEqual(settings.slideShowInterval, 0.1)
+        XCTAssertEqual(AppSettings(defaults: defaults).slideShowInterval, 0.1)
+    }
+
+    func testAdvanceLoopsToFirstPage() {
+        let viewModel = makeViewModel()
+        viewModel.startSlideShow()
+        defer { viewModel.stopSlideShow() }
+        XCTAssertTrue(viewModel.isSlideShowPlaying)
+        viewModel.advanceSlideShow()
+        viewModel.advanceSlideShow()
+        XCTAssertEqual(viewModel.currentIndex, 2)
+        viewModel.advanceSlideShow()
+        XCTAssertEqual(viewModel.currentIndex, 0)
+        XCTAssertTrue(viewModel.isSlideShowPlaying)
+    }
+
+    func testAdvanceStopsAtEndWithoutLoop() {
+        let viewModel = makeViewModel(count: 2)
+        viewModel.settings.isSlideShowByLoop = false
+        viewModel.startSlideShow()
+        viewModel.advanceSlideShow()
+        XCTAssertEqual(viewModel.currentIndex, 1)
+        viewModel.advanceSlideShow()
+        XCTAssertEqual(viewModel.currentIndex, 1)
+        XCTAssertFalse(viewModel.isSlideShowPlaying)
+    }
+
+    func testCannotStartWithoutBook() {
+        let viewModel = ReaderViewModel(settings: AppSettings(defaults: defaults), recentBooks: RecentBooksStore(defaults: defaults))
+        viewModel.toggleSlideShow()
+        XCTAssertFalse(viewModel.isSlideShowPlaying)
+    }
+
+    func testTimerAdvancesPages() async {
+        let viewModel = makeViewModel()
+        viewModel.settings.slideShowInterval = 0.1
+        viewModel.toggleSlideShow()
+        for _ in 0..<200 where viewModel.currentIndex == 0 {
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertGreaterThan(viewModel.currentIndex, 0)
+        viewModel.toggleSlideShow()
+        XCTAssertFalse(viewModel.isSlideShowPlaying)
+        let stopped = viewModel.currentIndex
+        try? await Task.sleep(nanoseconds: 250_000_000)
+        XCTAssertEqual(viewModel.currentIndex, stopped)
+    }
+
+    func testAutoHideEdges() {
+        let size = CGSize(width: 1000, height: 800)
+        var state = AutoHideState()
+        XCTAssertEqual(state.edges(at: CGPoint(x: 500, y: 400), in: size), [])
+        XCTAssertEqual(state.edges(at: CGPoint(x: 500, y: 10), in: size), [.top])
+        XCTAssertEqual(state.edges(at: CGPoint(x: 990, y: 790), in: size), [.bottom, .right])
+        XCTAssertEqual(state.edges(at: nil, in: size), [])
+        XCTAssertEqual(state.edges(at: CGPoint(x: 500, y: 400), in: .zero), [])
+        // 表示中のパネルの上にいる間は表示し続ける
+        state.visible = [.left]
+        state.depths[.left] = 300
+        XCTAssertEqual(state.edges(at: CGPoint(x: 250, y: 400), in: size), [.left])
+        XCTAssertEqual(state.edges(at: CGPoint(x: 350, y: 400), in: size), [])
+    }
+}

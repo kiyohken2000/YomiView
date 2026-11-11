@@ -118,6 +118,11 @@ final class ReaderViewModel {
     private(set) var infoMessage: InfoMessage?
     /// 開いた本の履歴（戻る / 進む用。NeeView の PrevBookHistory / NextBookHistory）
     @ObservationIgnored private var bookHistory: [URL] = []
+    /// スライドショーを再生中か（NeeView の ToggleSlideShow）
+    private(set) var isSlideShowPlaying = false
+    @ObservationIgnored private var slideShowTask: Task<Void, Never>?
+    /// スライドショーのページ送り中（ユーザーの操作と区別してタイマーをリセットしないため）
+    @ObservationIgnored private var isSlideShowAdvancing = false
     private(set) var bookHistoryIndex = -1
 
     /// キャッシュする件数の上限
@@ -470,6 +475,8 @@ final class ReaderViewModel {
 
     /// 表示するページ（と分割したページの半分）を変える
     private func move(to index: Int, part: PagePart?) {
+        // ユーザーの操作でページを変えたら、スライドショーのタイマーを最初から数え直す
+        if !isSlideShowAdvancing, index != currentIndex || part != currentPart { resetSlideShowTimer() }
         let origin = pendingOrigin
         currentIndex = index
         pendingOrigin = origin
@@ -729,6 +736,57 @@ final class ReaderViewModel {
             } else {
                 goPrevious(atEnd: true)
             }
+        }
+    }
+
+    // MARK: - スライドショー（NeeView の SlideShow。既定：5 秒、ループ再生、自動スクロール）
+
+    func toggleSlideShow() {
+        isSlideShowPlaying ? stopSlideShow() : startSlideShow()
+    }
+
+    func startSlideShow() {
+        guard isBookOpen else { return }
+        isSlideShowPlaying = true
+        resetSlideShowTimer()
+    }
+
+    func stopSlideShow() {
+        isSlideShowPlaying = false
+        slideShowTask?.cancel()
+        slideShowTask = nil
+    }
+
+    /// キーボード・マウスの操作があったら、次のスライドまでの時間を数え直す（NeeView の既定 InputAction）
+    func resetSlideShowTimer() {
+        guard isSlideShowPlaying else { return }
+        slideShowTask?.cancel()
+        let interval = settings.slideShowInterval
+        slideShowTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                guard !Task.isCancelled, let self else { return }
+                self.advanceSlideShow()
+            }
+        }
+    }
+
+    /// スライドショーを1回分進める。画像がはみ出していればその中をスクロールし（NeeView の IsAutoScroll）、
+    /// 最後のページではループ再生なら先頭へ戻り、そうでなければ停止する。
+    func advanceSlideShow() {
+        guard isSlideShowPlaying, isBookOpen else {
+            stopSlideShow()
+            return
+        }
+        isSlideShowAdvancing = true
+        defer { isSlideShowAdvancing = false }
+        let before = (currentIndex, currentPart, transform.pan)
+        scroll(.next)
+        guard before == (currentIndex, currentPart, transform.pan) else { return }
+        if settings.isSlideShowByLoop {
+            goFirst()
+        } else {
+            stopSlideShow()
         }
     }
 }

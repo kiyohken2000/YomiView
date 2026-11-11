@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 @main
@@ -135,6 +136,15 @@ struct ReaderCommands: Commands {
             Picker("背景", selection: Bindable(AppSettings.shared).background) {
                 ForEach(BackgroundType.allCases) { Text($0.label).tag($0) }
             }
+            Divider()
+            // NeeView の既定どおり F5
+            Toggle("スライドショー再生/停止", isOn: Binding(
+                get: { viewModel?.isSlideShowPlaying == true },
+                set: { _ in viewModel?.toggleSlideShow() }
+            ))
+            .keyboardShortcut(KeyEquivalent(Character(UnicodeScalar(NSF5FunctionKey)!)), modifiers: [])
+            .disabled(viewModel?.isBookOpen != true)
+            Toggle("フルスクリーンで自動非表示モードを適用する", isOn: Bindable(AppSettings.shared).isAutoHideInFullScreen)
             Divider()
         }
     }

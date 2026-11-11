@@ -18,6 +18,7 @@
 		29DF577EEF8C5DACCDE1FE7B /* SnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78BF685E44D23419324002D /* SnapshotTests.swift */; };
 		2A76111E75BAEBC6940C60A2 /* ScrollPagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D13902B4645E8BC6A237EC30 /* ScrollPagerTests.swift */; };
 		32ABC8DDDD0553509F4175C4 /* BookshelfPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73AC0D193E7A4EDE9245B196 /* BookshelfPanelView.swift */; };
+		3442B591D7B8CE56331AC7F5 /* FullScreenObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEC6D885DA68AEC52E680924 /* FullScreenObserver.swift */; };
 		35F6F7EA810DDACE05F8F6B6 /* BookshelfTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 213A54791052F8DE0B494761 /* BookshelfTests.swift */; };
 		38D85777D51CFC25B317F968 /* ScrollWheelMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AE3E191A9C29DCDC81A317 /* ScrollWheelMonitor.swift */; };
 		451628F5C0899888AF0E6FDD /* ThumbnailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00E2FD2DA845B21164C11805 /* ThumbnailView.swift */; };
@@ -133,6 +134,7 @@
 		EF87CF1127B5F3F2CFE06F61 /* ReaderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderViewModel.swift; sourceTree = "<group>"; };
 		F6784F8AF2C0355B3BE0204C /* ImageCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCacheTests.swift; sourceTree = "<group>"; };
 		FADE10075CB20E922843F19E /* PageListPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageListPanelView.swift; sourceTree = "<group>"; };
+		FEC6D885DA68AEC52E680924 /* FullScreenObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenObserver.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -250,6 +252,7 @@
 				73AC0D193E7A4EDE9245B196 /* BookshelfPanelView.swift */,
 				38D59D7A6D4FEB742197EAAB /* FileInfoPanelView.swift */,
 				CFE01C4C393BD7635B52C3BE /* FilmStripView.swift */,
+				FEC6D885DA68AEC52E680924 /* FullScreenObserver.swift */,
 				A049C7C937D4A67653A240E0 /* HistoryPanelView.swift */,
 				71780156343E4579FC83EFDB /* NavigatorPanelView.swift */,
 				D697D55F1E58F5AFD1B621C2 /* PageImageView.swift */,
@@ -420,6 +423,7 @@
 				C40FC4C54BEBF17692097418 /* FileInformation.swift in Sources */,
 				9F5E1DD8EBB2E5F5E9DAB8FA /* FilmStripView.swift in Sources */,
 				025FA6FA77D3E63431C0A2B0 /* FolderPageProvider.swift in Sources */,
+				3442B591D7B8CE56331AC7F5 /* FullScreenObserver.swift in Sources */,
 				93C1AB0EB1B01539CF865EA4 /* HistoryPanelView.swift in Sources */,
 				5C5627E0B85DB181C5164E9F /* ImageCache.swift in Sources */,
 				D7146A6E02719064BE8A9EEC /* NaturalSort.swift in Sources */,
