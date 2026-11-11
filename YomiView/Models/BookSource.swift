@@ -40,10 +40,11 @@ enum BookSource: Equatable {
     }
 
     /// 対応する PageProvider を作る。
-    func makeProvider() throws -> PageProvider {
+    /// - Parameter recursiveFolder: フォルダのときサブフォルダの画像も読み込む
+    func makeProvider(recursiveFolder: Bool = false) throws -> PageProvider {
         switch self {
         case .folder(let url):
-            return try FolderPageProvider(folderURL: url)
+            return try FolderPageProvider(folderURL: url, recursive: recursiveFolder)
         case .archive(let url):
             return try ZipPageProvider(archiveURL: url)
         case .pdf(let url):

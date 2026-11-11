@@ -12,8 +12,17 @@ struct SpreadView: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(canvas.pages, id: \.index) { page in
-                PageImageView(state: state(page.index))
-                    .frame(width: page.size.width, height: page.size.height)
+                let pageState = state(page.index)
+                if let half = page.half, case .loaded = pageState {
+                    // 横長ページの分割：画像全体を置き、表示する半分だけを切り抜く
+                    PageImageView(state: pageState)
+                        .frame(width: page.size.width * 2, height: page.size.height)
+                        .frame(width: page.size.width, height: page.size.height, alignment: half == .right ? .trailing : .leading)
+                        .clipped()
+                } else {
+                    PageImageView(state: pageState)
+                        .frame(width: page.size.width, height: page.size.height)
+                }
             }
         }
         .frame(width: canvas.frame.width, height: canvas.frame.height)

@@ -16,6 +16,10 @@ final class AppSettings {
         static let allowScaleUp = "allowScaleUp"
         static let allowScaleDown = "allowScaleDown"
         static let background = "background"
+        static let lastSingle = "lastSingle"
+        static let dividePage = "dividePage"
+        static let pageSortMode = "pageSortMode"
+        static let isRecursiveFolder = "isRecursiveFolder"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -60,8 +64,31 @@ final class AppSettings {
         didSet { defaults.set(background.rawValue, forKey: Key.background) }
     }
 
+    /// 見開きで最後のページを単独表示する（NeeView の既定どおりオフ）
+    var lastSingle: Bool {
+        didSet { defaults.set(lastSingle, forKey: Key.lastSingle) }
+    }
+
+    /// 1ページ表示で横長ページを分割する（NeeView の既定どおりオフ）
+    var dividePage: Bool {
+        didSet { defaults.set(dividePage, forKey: Key.dividePage) }
+    }
+
+    /// ページの並び順（計画書どおり名前の自然順が初期値）
+    var pageSortMode: PageSortMode {
+        didSet { defaults.set(pageSortMode.rawValue, forKey: Key.pageSortMode) }
+    }
+
+    /// フォルダを開くときサブフォルダの画像も読み込む（NeeView の既定どおりオフ）
+    var isRecursiveFolder: Bool {
+        didSet { defaults.set(isRecursiveFolder, forKey: Key.isRecursiveFolder) }
+    }
+
     var spreadOptions: SpreadCalculator.Options {
-        SpreadCalculator.Options(coverSingle: coverSingle, landscapeSingle: landscapeSingle)
+        SpreadCalculator.Options(
+            coverSingle: coverSingle, landscapeSingle: landscapeSingle,
+            lastSingle: lastSingle, dividePage: dividePage
+        )
     }
 
     init(defaults: UserDefaults) {
@@ -75,5 +102,9 @@ final class AppSettings {
         allowScaleUp = defaults.object(forKey: Key.allowScaleUp) as? Bool ?? true
         allowScaleDown = defaults.object(forKey: Key.allowScaleDown) as? Bool ?? true
         background = defaults.string(forKey: Key.background).flatMap(BackgroundType.init(rawValue:)) ?? .black
+        lastSingle = defaults.object(forKey: Key.lastSingle) as? Bool ?? false
+        dividePage = defaults.object(forKey: Key.dividePage) as? Bool ?? false
+        pageSortMode = defaults.string(forKey: Key.pageSortMode).flatMap(PageSortMode.init(rawValue:)) ?? .fileName
+        isRecursiveFolder = defaults.object(forKey: Key.isRecursiveFolder) as? Bool ?? false
     }
 }

@@ -7,6 +7,7 @@ import XCTest
 ///
 /// 環境変数 `YOMIVIEW_SNAPSHOT_DIR`（xcodebuild からは `TEST_RUNNER_YOMIVIEW_SNAPSHOT_DIR`）と
 /// `YOMIVIEW_SNAPSHOT_BOOK` を指定したときだけ動き、ウィンドウを PNG に書き出す。通常のテストでは何もしない。
+/// `YOMIVIEW_SNAPSHOT_WIDE_BOOK`（2ページ目が横長の本）も指定すると、横長ページの分割も書き出す。
 @MainActor
 final class SnapshotTests: XCTestCase {
     func testWriteMainWindowSnapshots() async throws {
@@ -25,7 +26,7 @@ final class SnapshotTests: XCTestCase {
         let settings = AppSettings(defaults: defaults)
         let recentBooks = RecentBooksStore(defaults: defaults)
 
-        let snapshots: [(String, CGSize, SidePanelKind?, SidePanelKind?, Bool, (ReaderViewModel) -> Void)] = [
+        var snapshots: [(String, CGSize, SidePanelKind?, SidePanelKind?, Bool, (ReaderViewModel) -> Void)] = [
             ("spread-panels", CGSize(width: 1280, height: 800), .bookshelf, .fileInfo, true, { _ in }),
             ("pagelist", CGSize(width: 1280, height: 800), .pageList, nil, false, { _ in }),
             ("single", CGSize(width: 800, height: 1000), nil, nil, false, { _ in }),
@@ -35,6 +36,22 @@ final class SnapshotTests: XCTestCase {
                 viewModel.toggleFlipHorizontal()
             }),
         ]
+        if let wide = env["YOMIVIEW_SNAPSHOT_WIDE_BOOK"] {
+            // 右開きの1ページ表示で横長ページを分割：まず右半分（R）、次に左半分（L）
+            for (name, steps) in [("divide-first", 0), ("divide-second", 1)] {
+                snapshots.append((name, CGSize(width: 800, height: 1000), nil, nil, false, { viewModel in
+                    viewModel.settings.dividePage = true
+                    viewModel.manualViewMode = .single
+                    viewModel.open(URL(fileURLWithPath: wide))
+                    viewModel.goNext()
+                    Task { @MainActor in
+                        // 横長と分かって分割されるまで待ってから進める
+                        for _ in 0..<40 where viewModel.currentPart == nil { try? await Task.sleep(nanoseconds: 20_000_000) }
+                        for _ in 0..<steps { viewModel.goNext() }
+                    }
+                }))
+            }
+        }
         for (name, size, left, right, filmStrip, configure) in snapshots {
             layout.left = left
             layout.right = right
@@ -61,6 +78,7 @@ final class SnapshotTests: XCTestCase {
                 .write(to: outDir.appendingPathComponent("\(name).png"))
             window.orderOut(nil)
             settings.background = .black
+            settings.dividePage = false
         }
     }
 }

@@ -69,6 +69,26 @@ struct ReaderCommands: Commands {
             Button("最後のページ（End）") { viewModel?.goLast() }
                 .disabled(viewModel?.isBookOpen != true)
         }
+        CommandMenu("ページ") {
+            // 表示名は NeeView のページ設定に合わせる
+            Toggle("最初のページを単独表示", isOn: Bindable(AppSettings.shared).coverSingle)
+            Toggle("最後のページを単独表示", isOn: Bindable(AppSettings.shared).lastSingle)
+            Toggle("横長ページを 2 ページとみなす", isOn: Bindable(AppSettings.shared).landscapeSingle)
+            Toggle("横長ページを分割する", isOn: Bindable(AppSettings.shared).dividePage)
+            Divider()
+            Menu("ページの並び順") {
+                ForEach(PageSortMode.allCases) { mode in
+                    Toggle(mode.label, isOn: Binding(
+                        get: { AppSettings.shared.pageSortMode == mode },
+                        set: { if $0 { viewModel?.setPageSortMode(mode) ?? (AppSettings.shared.pageSortMode = mode) } }
+                    ))
+                }
+            }
+            Toggle("サブフォルダーを読み込む", isOn: Binding(
+                get: { AppSettings.shared.isRecursiveFolder },
+                set: { viewModel?.setRecursiveFolder($0) ?? (AppSettings.shared.isRecursiveFolder = $0) }
+            ))
+        }
         CommandGroup(before: .toolbar) {
             Button(viewModel?.viewMode == .spread ? "1ページ表示にする（M）" : "見開き表示にする（M）") {
                 viewModel?.toggleViewMode()

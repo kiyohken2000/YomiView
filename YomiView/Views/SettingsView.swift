@@ -15,7 +15,16 @@ struct SettingsView: View {
 
             Section("見開き") {
                 Toggle("表紙（1ページ目）を単独で表示する", isOn: $settings.coverSingle)
+                Toggle("最後のページを単独で表示する", isOn: $settings.lastSingle)
                 Toggle("横長のページを単独で表示する", isOn: $settings.landscapeSingle)
+                Toggle("1ページ表示のとき、横長のページを分割する", isOn: $settings.dividePage)
+            }
+
+            Section("ページ") {
+                Picker("ページの並び順", selection: $settings.pageSortMode) {
+                    ForEach(PageSortMode.allCases) { Text($0.label).tag($0) }
+                }
+                Toggle("フォルダのサブフォルダーを読み込む", isOn: $settings.isRecursiveFolder)
             }
         }
         .formStyle(.grouped)

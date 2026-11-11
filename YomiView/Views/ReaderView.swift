@@ -188,6 +188,9 @@ struct ReaderView: View {
         .focused($isFocused)
         .onAppear { isFocused = true }
         .onChange(of: viewModel.currentSpread) { viewModel.scheduleLoads() }
+        // 設定画面で変えた並び順・サブフォルダーの読み込みを、開いている本に反映する
+        .onChange(of: viewModel.settings.pageSortMode) { viewModel.applyPageSort() }
+        .onChange(of: viewModel.settings.isRecursiveFolder) { viewModel.applyRecursiveFolder() }
         .onChange(of: viewModel.bookURL) { isFocused = true }
         .onKeyPress(keys: Self.handledKeys, phases: [.down, .repeat]) { press in
             handleKey(press)

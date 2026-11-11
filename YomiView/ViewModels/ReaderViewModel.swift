@@ -28,6 +28,8 @@ final class ReaderViewModel {
             let index: Int
             /// 高さを揃えたときの大きさ（拡大率を掛ける前）
             let size: CGSize
+            /// 横長ページを分割して表示するとき、画像のどちらの半分を表示するか
+            var half: PageHalf?
         }
 
         /// 左から並べるページ
@@ -63,6 +65,10 @@ final class ReaderViewModel {
     let bookshelf: BookshelfModel
 
     private(set) var provider: PageProvider?
+    /// 並べ替える前の PageProvider（並び順を変えたときに使う）
+    @ObservationIgnored private var baseProvider: PageProvider?
+    /// 開いている本に適用している並び順
+    private(set) var appliedSortMode: PageSortMode = .fileName
     /// 開いている本の場所（読書位置の保存に使う）
     private(set) var bookURL: URL?
     /// 現在のページ（表示中の組に含まれるページ）
@@ -70,11 +76,12 @@ final class ReaderViewModel {
         didSet {
             guard currentIndex != oldValue else { return }
             savePosition()
-            // ページを変えたら拡大・回転・反転・ルーペを元に戻す（NeeView の既定）
-            transform = ViewTransform(origin: pendingOrigin ?? .start)
-            pendingOrigin = nil
-            isLoupeActive = false
+            resetTransformForNewPage()
         }
+    }
+    /// 横長ページを分割して表示しているとき、表示中の半分（NeeView の PagePosition.Part）
+    private(set) var currentPart: PagePart? {
+        didSet { if currentPart != oldValue { resetTransformForNewPage() } }
     }
     /// 読み込みに失敗したページとその理由
     private(set) var failedPages: [Int: String] = [:]
@@ -155,7 +162,7 @@ final class ReaderViewModel {
 
     var currentSpread: Spread? {
         let spreads = spreads
-        return SpreadCalculator.spreadIndex(containing: currentIndex, in: spreads).map { spreads[$0] }
+        return SpreadCalculator.spreadIndex(containing: currentIndex, part: currentPart, in: spreads).map { spreads[$0] }
     }
 
     /// 画面に左から並べるページ
@@ -189,7 +196,10 @@ final class ReaderViewModel {
         switch item.kind {
         case .archiveEntry(let path):
             return path.split(separator: "/").joined(separator: " > ")
-        case .file, .pdfPage:
+        case .file:
+            // サブフォルダーを読み込むときは、名前がフォルダからの相対パスになる
+            return item.name.split(separator: "/").joined(separator: " > ")
+        case .pdfPage:
             return item.name
         }
     }
@@ -244,7 +254,7 @@ final class ReaderViewModel {
     /// 開いた本の親フォルダを本棚に表示し、本の履歴に記録する。
     func open(_ url: URL, failure: FailureStyle = .alert, recordHistory: Bool = true) {
         do {
-            let provider = try BookSource.detect(url).makeProvider()
+            let provider = try BookSource.detect(url).makeProvider(recursiveFolder: settings.isRecursiveFolder)
             let saved = recentBooks.recordOpen(url)
             bookURL = nil
             manualViewMode = saved.viewMode
@@ -332,8 +342,53 @@ final class ReaderViewModel {
         recentBooks.updatePosition(of: bookURL, page: currentIndex, viewMode: manualViewMode)
     }
 
-    /// 開いた本を設定し、指定ページ（既定は先頭）を表示する。
+    /// 開いた本を設定し、設定の並び順に並べ替えて、指定ページ（既定は先頭）を表示する。
     func setProvider(_ provider: PageProvider, startIndex: Int = 0) {
+        baseProvider = provider
+        let mode = settings.pageSortMode
+        installProvider(Self.sorted(provider, mode: mode), sortMode: mode, startIndex: startIndex)
+    }
+
+    /// 並び順を変え、開いている本を並べ替える（シャッフルは選ぶたびに混ぜ直す）
+    func setPageSortMode(_ mode: PageSortMode) {
+        settings.pageSortMode = mode
+        applyPageSort(force: true)
+    }
+
+    /// 設定の並び順を開いている本に適用する。表示中のページは並べ替えた後も表示し続ける。
+    func applyPageSort(force: Bool = false) {
+        guard let baseProvider, let provider else { return }
+        let mode = settings.pageSortMode
+        guard force || mode != appliedSortMode else { return }
+        let current = provider.pages.indices.contains(currentIndex) ? provider.pages[currentIndex].kind : nil
+        let sorted = Self.sorted(baseProvider, mode: mode)
+        let start = sorted.pages.firstIndex { $0.kind == current } ?? 0
+        let url = bookURL
+        installProvider(sorted, sortMode: mode, startIndex: start)
+        bookURL = url
+        savePosition()
+    }
+
+    /// 「サブフォルダーを読み込む」を切り替え、フォルダの本を開いていれば読み込み直す
+    func setRecursiveFolder(_ recursive: Bool) {
+        settings.isRecursiveFolder = recursive
+        applyRecursiveFolder()
+    }
+
+    /// 開いているフォルダの本に「サブフォルダーを読み込む」を反映する
+    func applyRecursiveFolder() {
+        guard let bookURL, let folder = baseProvider as? FolderPageProvider,
+              folder.isRecursive != settings.isRecursiveFolder else { return }
+        open(bookURL, failure: .notice, recordHistory: false)
+    }
+
+    /// 名前↑ は取得元の既定の並び（フォルダ・ZIP は自然順、PDF はページ順）なので並べ替えない
+    private static func sorted(_ provider: PageProvider, mode: PageSortMode) -> PageProvider {
+        mode == .fileName ? provider : SortedPageProvider(base: provider, mode: mode, seed: .random(in: 1...UInt64.max))
+    }
+
+    private func installProvider(_ provider: PageProvider, sortMode: PageSortMode, startIndex: Int) {
+        appliedSortMode = sortMode
         bookURL = nil
         loaderTask?.cancel()
         loaderTask = nil
@@ -348,7 +403,7 @@ final class ReaderViewModel {
         pageSizes = [:]
         pageEdgeColors = [:]
         self.provider = provider
-        currentIndex = min(max(0, startIndex), max(0, provider.pageCount - 1))
+        move(to: min(max(0, startIndex), max(0, provider.pageCount - 1)), part: nil)
         scheduleLoads()
     }
 
@@ -380,7 +435,7 @@ final class ReaderViewModel {
     /// 指定ページへ（ページスライダーなど）
     func go(to page: Int) {
         guard (0..<pageCount).contains(page), page != currentIndex else { return }
-        currentIndex = page
+        move(to: page, part: nil)
         scheduleLoads()
     }
 
@@ -392,25 +447,41 @@ final class ReaderViewModel {
 
     /// 先頭の組へ
     func goFirst() {
-        guard let first = spreads.first, first.first != currentIndex else { return }
-        currentIndex = first.first
+        guard let first = spreads.first, first != currentSpread else { return }
+        move(to: first.first, part: first.part)
         scheduleLoads()
     }
 
     /// 末尾の組へ
     func goLast() {
         guard let last = spreads.last, currentSpread != last else { return }
-        currentIndex = last.first
+        move(to: last.first, part: last.part)
         scheduleLoads()
     }
 
     private func moveSpread(by offset: Int) {
         let spreads = spreads
-        guard let index = SpreadCalculator.spreadIndex(containing: currentIndex, in: spreads) else { return }
+        guard let index = SpreadCalculator.spreadIndex(containing: currentIndex, part: currentPart, in: spreads) else { return }
         let target = index + offset
         guard spreads.indices.contains(target) else { return }
-        currentIndex = spreads[target].first
+        move(to: spreads[target].first, part: spreads[target].part)
         scheduleLoads()
+    }
+
+    /// 表示するページ（と分割したページの半分）を変える
+    private func move(to index: Int, part: PagePart?) {
+        let origin = pendingOrigin
+        currentIndex = index
+        pendingOrigin = origin
+        currentPart = part
+        pendingOrigin = nil
+    }
+
+    /// ページを変えたら拡大・回転・反転・ルーペを元に戻す（NeeView の既定）
+    private func resetTransformForNewPage() {
+        transform = ViewTransform(origin: pendingOrigin ?? .start)
+        pendingOrigin = nil
+        isLoupeActive = false
     }
 
     // MARK: - 画像の読み込み
@@ -493,7 +564,12 @@ final class ReaderViewModel {
 
     var canvas: Canvas {
         let pages = displayedPages
-        let (sizes, frame) = CanvasLayout.frame(pageSizes: pages.map { pageSizes[$0] ?? Self.placeholderPageSize })
+        // 分割したページは、画像の半分の大きさのページとして並べる
+        let half = currentSpread?.part?.side(direction: readingDirection)
+        let (sizes, frame) = CanvasLayout.frame(pageSizes: pages.map { page in
+            let size = pageSizes[page] ?? Self.placeholderPageSize
+            return half == nil ? size : CGSize(width: size.width / 2, height: size.height)
+        })
         let stretch = CanvasLayout.stretchScale(
             mode: settings.stretchMode, frame: frame, angle: transform.angle, canvas: containerSize,
             allowScaleUp: settings.allowScaleUp, allowScaleDown: settings.allowScaleDown
@@ -510,7 +586,7 @@ final class ReaderViewModel {
             content: content, canvas: containerSize
         )
         return Canvas(
-            pages: zip(pages, sizes).map { Canvas.Page(index: $0, size: $1) },
+            pages: zip(pages, sizes).map { Canvas.Page(index: $0, size: $1, half: half) },
             frame: frame, stretchScale: stretch, scale: scale, content: content, offset: offset
         )
     }

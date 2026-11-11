@@ -26,25 +26,29 @@ final class ZipPageProvider: PageProvider, @unchecked Sendable {
             throw BookError.unreadableArchive(archiveURL.lastPathComponent)
         }
 
-        let candidates: [(path: String, entry: Entry)] = archive.compactMap { entry in
+        let candidates: [(path: String, entry: Entry)] = archive.compactMap { entry -> (path: String, entry: Entry)? in
             guard entry.type == .file else { return nil }
             let path = Self.decodedPath(of: entry)
             guard Self.isPageEntryPath(path) else { return nil }
             return (path, entry)
         }
-        let sorted = candidates.sorted { NaturalSort.areInIncreasingOrder($0.path, $1.path) }
+        let sorted = candidates.enumerated()
+            .sorted { NaturalSort.areInIncreasingOrder($0.element.path, $1.element.path) }
         guard !sorted.isEmpty else {
             throw BookError.noImages(archiveURL.lastPathComponent)
         }
 
         self.archive = archive
         self.archiveURL = archiveURL
-        entries = sorted.map(\.entry)
+        entries = sorted.map(\.element.entry)
         pages = sorted.enumerated().map { index, item in
             PageItem(
                 index: index,
-                name: (item.path as NSString).lastPathComponent,
-                kind: .archiveEntry(path: item.path)
+                name: (item.element.path as NSString).lastPathComponent,
+                kind: .archiveEntry(path: item.element.path),
+                entryIndex: item.offset,
+                modificationDate: item.element.entry.fileAttributes[.modificationDate] as? Date,
+                fileSize: Int64(item.element.entry.uncompressedSize)
             )
         }
     }
