@@ -1,7 +1,7 @@
 import Foundation
 
 /// 1ページ表示 / 見開き表示。
-enum ViewMode: String, CaseIterable, Identifiable {
+enum ViewMode: String, CaseIterable, Identifiable, Codable {
     case single
     case spread
 

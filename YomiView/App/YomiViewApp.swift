@@ -20,12 +20,24 @@ struct YomiViewApp: App {
 /// ファイル・表示メニュー。
 struct ReaderCommands: Commands {
     @FocusedValue(\.readerViewModel) private var viewModel
+    private let recentBooks = RecentBooksStore.shared
 
     var body: some Commands {
         CommandGroup(after: .newItem) {
             Button("開く…") { viewModel?.presentOpenPanel() }
                 .keyboardShortcut("o", modifiers: .command)
                 .disabled(viewModel == nil)
+            Menu("最近開いた本") {
+                ForEach(recentBooks.entries) { entry in
+                    Button(entry.displayName) { viewModel?.open(entry.url) }
+                        .disabled(viewModel == nil)
+                }
+                if !recentBooks.entries.isEmpty {
+                    Divider()
+                }
+                Button("メニューを消去") { recentBooks.clear() }
+                    .disabled(recentBooks.entries.isEmpty)
+            }
         }
         CommandGroup(before: .toolbar) {
             Button(viewModel?.viewMode == .spread ? "1ページ表示にする（M）" : "見開き表示にする（M）") {

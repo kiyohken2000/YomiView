@@ -43,7 +43,7 @@ final class ReaderViewModelTests: XCTestCase {
     private func makeViewModel(direction: ReadingDirection = .leftToRight) -> ReaderViewModel {
         let settings = AppSettings(defaults: defaults)
         settings.readingDirection = direction
-        return ReaderViewModel(settings: settings)
+        return ReaderViewModel(settings: settings, recentBooks: RecentBooksStore(defaults: defaults))
     }
 
     private func waitForLoads(_ viewModel: ReaderViewModel) async {
@@ -256,6 +256,51 @@ final class ReaderViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.requiredPixelSize, 1792)
         viewModel.zoomMode = .original
         XCTAssertEqual(viewModel.requiredPixelSize, ReaderViewModel.originalMaxPixelSize)
+    }
+
+    // MARK: - 読書位置の復元
+
+    func testReopeningBookRestoresPageAndViewMode() throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("YomiViewRestore-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        for i in 1...8 {
+            try Data().write(to: folder.appendingPathComponent("\(i).png"))
+        }
+
+        let first = makeViewModel()
+        first.open(folder)
+        XCTAssertNil(first.openError)
+        first.manualViewMode = .single
+        first.goNext()
+        first.goNext()
+        first.goNext()
+        first.toggleViewMode()
+        XCTAssertEqual(first.currentIndex, 3)
+
+        // 別のウィンドウ（再起動後を想定）で同じ本を開く
+        let second = makeViewModel()
+        second.open(folder)
+        XCTAssertEqual(second.currentIndex, 3)
+        XCTAssertEqual(second.manualViewMode, .spread)
+        XCTAssertEqual(second.currentSpread?.pages, [3, 4])
+    }
+
+    func testRestoredPageIsClampedToBook() throws {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("YomiViewClamp-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try Data().write(to: folder.appendingPathComponent("1.png"))
+
+        let store = RecentBooksStore(defaults: defaults)
+        store.recordOpen(folder)
+        store.updatePosition(of: folder, page: 50, viewMode: nil)
+
+        let viewModel = makeViewModel()
+        viewModel.open(folder)
+        XCTAssertEqual(viewModel.currentIndex, 0)
     }
 
     func testCurrentPageIsKeptWhenSwitchingModes() {

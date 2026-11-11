@@ -31,10 +31,15 @@ final class ReaderViewModel {
     }
 
     let settings: AppSettings
+    let recentBooks: RecentBooksStore
 
     private(set) var provider: PageProvider?
+    /// 開いている本の場所（読書位置の保存に使う）
+    private(set) var bookURL: URL?
     /// 現在のページ（表示中の組に含まれるページ）
-    private(set) var currentIndex: Int = 0
+    private(set) var currentIndex: Int = 0 {
+        didSet { if currentIndex != oldValue { savePosition() } }
+    }
     /// 読み込みに失敗したページとその理由
     private(set) var failedPages: [Int: String] = [:]
     /// キャッシュの中身が変わるたびに増える（View の更新用）
@@ -42,7 +47,9 @@ final class ReaderViewModel {
     /// 読み込んで分かった、各ページが横長かどうか
     private(set) var widePages: [Int: Bool] = [:]
     /// M キーなどで手動で選んだ表示モード。nil なら表示領域の形で自動的に決める
-    var manualViewMode: ViewMode?
+    var manualViewMode: ViewMode? {
+        didSet { if manualViewMode != oldValue { savePosition() } }
+    }
     /// 画像の大きさ（初期値はウィンドウに合わせる）
     var zoomMode: ZoomMode = .fit {
         didSet { if zoomMode != oldValue { scheduleLoads() } }
@@ -63,8 +70,9 @@ final class ReaderViewModel {
     @ObservationIgnored private var loadQueue: [Int] = []
     @ObservationIgnored private var loaderTask: Task<Void, Never>?
 
-    init(settings: AppSettings = .shared) {
-        self.settings = settings
+    init(settings: AppSettings? = nil, recentBooks: RecentBooksStore? = nil) {
+        self.settings = settings ?? .shared
+        self.recentBooks = recentBooks ?? .shared
     }
 
     var isBookOpen: Bool { provider != nil }
@@ -149,17 +157,29 @@ final class ReaderViewModel {
         open(url)
     }
 
+    /// 本を開く。前に読んだことのある本なら、最後に読んだページと見開き設定を復元する。
     func open(_ url: URL) {
         do {
             let provider = try BookSource.detect(url).makeProvider()
-            setProvider(provider)
+            let saved = recentBooks.recordOpen(url)
+            bookURL = nil
+            manualViewMode = saved.viewMode
+            setProvider(provider, startIndex: saved.lastPage)
+            bookURL = url
+            savePosition()
         } catch {
             openError = error.localizedDescription
         }
     }
 
+    private func savePosition() {
+        guard let bookURL else { return }
+        recentBooks.updatePosition(of: bookURL, page: currentIndex, viewMode: manualViewMode)
+    }
+
     /// 開いた本を設定し、指定ページ（既定は先頭）を表示する。
     func setProvider(_ provider: PageProvider, startIndex: Int = 0) {
+        bookURL = nil
         loaderTask?.cancel()
         loaderTask = nil
         loadQueue = []
