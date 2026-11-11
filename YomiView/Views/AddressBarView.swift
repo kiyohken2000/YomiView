@@ -74,6 +74,15 @@ struct AddressBarView: View {
                     address = viewModel.bookURL?.path ?? ""
                     onCommit()
                 }
+            if let url = viewModel.bookURL {
+                let isBookmarked = BookmarkStore.shared.contains(url)
+                Button { BookmarkStore.shared.toggle(url) } label: {
+                    Image(systemName: isBookmarked ? "star.fill" : "star")
+                        .foregroundStyle(isBookmarked ? Theme.bookmarkIcon : Theme.foreground)
+                }
+                .buttonStyle(.plain)
+                .help(isBookmarked ? "ブックマークから削除（⌘D）" : "ブックマークに登録（⌘D）")
+            }
         }
         .padding(.horizontal, 8)
         .frame(height: 26)

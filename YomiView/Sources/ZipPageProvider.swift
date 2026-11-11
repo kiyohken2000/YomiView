@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import ImageIO
 import ZIPFoundation
 
 /// ZIP / CBZ アーカイブ内の画像エントリをページとして提供する。
@@ -14,6 +15,7 @@ final class ZipPageProvider: PageProvider, @unchecked Sendable {
     private let lock = NSLock()
     private let archive: Archive
     private let entries: [Entry]
+    private let archiveURL: URL
 
     init(archiveURL: URL) throws {
         title = archiveURL.deletingPathExtension().lastPathComponent
@@ -36,6 +38,7 @@ final class ZipPageProvider: PageProvider, @unchecked Sendable {
         }
 
         self.archive = archive
+        self.archiveURL = archiveURL
         entries = sorted.map(\.entry)
         pages = sorted.enumerated().map { index, item in
             PageItem(
@@ -62,6 +65,30 @@ final class ZipPageProvider: PageProvider, @unchecked Sendable {
             throw BookError.imageDecodeFailed(name)
         }
         return PageImage(cgImage: try ImageLoading.downsample(data: data, maxPixelSize: maxPixelSize, name: name))
+    }
+
+    func fileInfo(at index: Int) throws -> PageFileInfo {
+        guard entries.indices.contains(index), case .archiveEntry(let path) = pages[index].kind else {
+            throw BookError.pageOutOfRange(index)
+        }
+        let entry = entries[index]
+        var info = PageFileInfo(
+            fileName: pages[index].name,
+            filePath: path,
+            creationDate: nil,
+            modificationDate: entry.fileAttributes[.modificationDate] as? Date,
+            fileSize: Int64(entry.uncompressedSize),
+            archivePath: archiveURL.path,
+            archiver: "ZIP"
+        )
+        var data = Data()
+        lock.lock()
+        _ = try? archive.extract(entry, skipCRC32: true) { data.append($0) }
+        lock.unlock()
+        if let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) {
+            (info.imageType, info.imageProperties) = ImageLoading.properties(of: source)
+        }
+        return info
     }
 
     /// ページとして扱うエントリのパスか。

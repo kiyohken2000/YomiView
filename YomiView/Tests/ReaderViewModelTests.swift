@@ -15,6 +15,10 @@ final class FakeProvider: PageProvider, @unchecked Sendable {
         self.widePages = widePages
     }
 
+    func fileInfo(at index: Int) throws -> PageFileInfo {
+        PageFileInfo(fileName: pages[index].name, filePath: pages[index].name)
+    }
+
     func loadImage(at index: Int, maxPixelSize: Int) throws -> PageImage {
         if index == failingIndex { throw BookError.imageDecodeFailed(pages[index].name) }
         let context = CGContext(

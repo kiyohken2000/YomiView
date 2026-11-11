@@ -12,6 +12,8 @@ protocol PageProvider: AnyObject, Sendable {
     var pages: [PageItem] { get }
     /// 指定ページの画像を、長辺が `maxPixelSize` 以下になるよう縮小して読み込む。
     func loadImage(at index: Int, maxPixelSize: Int) throws -> PageImage
+    /// 指定ページの元ファイルの情報
+    func fileInfo(at index: Int) throws -> PageFileInfo
 }
 
 /// 読み込んだページの画像。
@@ -59,6 +61,13 @@ enum ImageLoading {
             throw BookError.imageDecodeFailed(name)
         }
         return image
+    }
+
+    /// 画像の形式とプロパティ（EXIF などを含む）。画像全体はデコードしない。
+    static func properties(of source: CGImageSource) -> (type: String?, properties: [String: Any]) {
+        let type = CGImageSourceGetType(source) as String?
+        let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] ?? [:]
+        return (type, properties)
     }
 
     static func downsample(url: URL, maxPixelSize: Int) throws -> CGImage {

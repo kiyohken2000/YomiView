@@ -98,6 +98,10 @@ struct ReaderView: View {
             PageListPanelView(viewModel: viewModel)
         case .history:
             HistoryPanelView(recentBooks: recentBooks, viewModel: viewModel)
+        case .fileInfo:
+            FileInfoPanelView(viewModel: viewModel)
+        case .bookmark:
+            BookmarkPanelView(bookmarks: BookmarkStore.shared, viewModel: viewModel)
         }
     }
 
@@ -167,7 +171,7 @@ struct ReaderView: View {
 
     private static let handledKeys: Set<KeyEquivalent> = [
         .leftArrow, .rightArrow, .upArrow, .downArrow, .space, .home, .end,
-        "f", "F", "m", "M", "d", "D", "b", "B", "h", "H",
+        "f", "F", "m", "M", "d", "D", "b", "B", "h", "H", "p", "P", "i", "I",
     ]
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {

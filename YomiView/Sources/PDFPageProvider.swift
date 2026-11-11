@@ -13,6 +13,7 @@ final class PDFPageProvider: PageProvider, @unchecked Sendable {
     /// PDFDocument は同時アクセスに対応していないため、lock で直列化する。
     private let lock = NSLock()
     private let document: PDFDocument
+    private let pdfURL: URL
 
     init(pdfURL: URL) throws {
         title = pdfURL.deletingPathExtension().lastPathComponent
@@ -23,10 +24,31 @@ final class PDFPageProvider: PageProvider, @unchecked Sendable {
             throw BookError.noImages(pdfURL.lastPathComponent)
         }
         self.document = document
+        self.pdfURL = pdfURL
         pages = (0..<document.pageCount).map { index in
             let label = document.page(at: index)?.label ?? "\(index + 1)"
             return PageItem(index: index, name: label, kind: .pdfPage(index))
         }
+    }
+
+    func fileInfo(at index: Int) throws -> PageFileInfo {
+        guard pages.indices.contains(index) else { throw BookError.pageOutOfRange(index) }
+        lock.lock()
+        let page = document.page(at: index)
+        let box = page?.bounds(for: .cropBox) ?? .zero
+        let rotated = ((page?.rotation ?? 0) / 90) % 2 != 0
+        lock.unlock()
+        let values = try? pdfURL.resourceValues(forKeys: [.creationDateKey, .contentModificationDateKey, .fileSizeKey])
+        return PageFileInfo(
+            fileName: pages[index].name,
+            filePath: "\(pdfURL.lastPathComponent) > \(pages[index].name)",
+            creationDate: values?.creationDate,
+            modificationDate: values?.contentModificationDate,
+            fileSize: values?.fileSize.map(Int64.init),
+            archivePath: pdfURL.path,
+            archiver: "PDF",
+            pdfPageSize: rotated ? CGSize(width: box.height, height: box.width) : box.size
+        )
     }
 
     func loadImage(at index: Int, maxPixelSize: Int) throws -> PageImage {

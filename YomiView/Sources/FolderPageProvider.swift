@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import ImageIO
 
 /// フォルダ直下の画像ファイルをページとして提供する。サブフォルダと隠しファイルは含めない。
 final class FolderPageProvider: PageProvider {
@@ -37,5 +38,23 @@ final class FolderPageProvider: PageProvider {
             throw BookError.pageOutOfRange(index)
         }
         return PageImage(cgImage: try ImageLoading.downsample(url: url, maxPixelSize: maxPixelSize))
+    }
+
+    func fileInfo(at index: Int) throws -> PageFileInfo {
+        guard pages.indices.contains(index), case .file(let url) = pages[index].kind else {
+            throw BookError.pageOutOfRange(index)
+        }
+        let values = try? url.resourceValues(forKeys: [.creationDateKey, .contentModificationDateKey, .fileSizeKey])
+        var info = PageFileInfo(
+            fileName: url.lastPathComponent,
+            filePath: url.path,
+            creationDate: values?.creationDate,
+            modificationDate: values?.contentModificationDate,
+            fileSize: values?.fileSize.map(Int64.init)
+        )
+        if let source = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) {
+            (info.imageType, info.imageProperties) = ImageLoading.properties(of: source)
+        }
+        return info
     }
 }

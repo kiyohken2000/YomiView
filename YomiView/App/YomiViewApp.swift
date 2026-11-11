@@ -39,6 +39,15 @@ struct ReaderCommands: Commands {
                     .disabled(recentBooks.entries.isEmpty)
             }
         }
+        CommandMenu("ブックマーク") {
+            Button(viewModel?.bookURL.map(BookmarkStore.shared.contains) == true ? "ブックマークから削除" : "ブックマークに登録") {
+                if let url = viewModel?.bookURL { BookmarkStore.shared.toggle(url) }
+            }
+            .keyboardShortcut("d", modifiers: .command)
+            .disabled(viewModel?.bookURL == nil)
+            Button("ブックマークパネル") { SidePanelLayout.shared.toggle(.bookmark) }
+                .keyboardShortcut("b", modifiers: [.command, .option])
+        }
         CommandMenu("移動") {
             Button("次のブック") { viewModel?.openNextBook() }
                 .keyboardShortcut(.downArrow, modifiers: .option)

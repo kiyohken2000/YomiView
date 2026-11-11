@@ -26,7 +26,7 @@ final class SnapshotTests: XCTestCase {
         let recentBooks = RecentBooksStore(defaults: defaults)
 
         let snapshots: [(String, CGSize, SidePanelKind?, SidePanelKind?, Bool)] = [
-            ("spread-panels", CGSize(width: 1280, height: 800), .bookshelf, nil, true),
+            ("spread-panels", CGSize(width: 1280, height: 800), .bookshelf, .fileInfo, true),
             ("pagelist", CGSize(width: 1280, height: 800), .pageList, nil, false),
             ("single", CGSize(width: 800, height: 1000), nil, nil, false),
         ]

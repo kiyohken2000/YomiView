@@ -176,6 +176,11 @@ private struct BookshelfRow: View {
                     .lineLimit(2)
             }
             Spacer(minLength: 0)
+            if BookmarkStore.shared.contains(item.url) {
+                Image(systemName: "star.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.bookmarkIcon)
+            }
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
