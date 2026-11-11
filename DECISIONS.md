@@ -238,3 +238,11 @@
 ## 本の終端の通知
 
 - **通知**：次・前のページへの移動（キー、ホイール、クリックなど）で本の最後・最初を越えようとしたら、画面下に「最後のページです」「最初のページです」と2秒表示する（NeeView の Notice.LastPage / Notice.FirstPage。ページの終端での動作の既定「なし」と同じ）。Home / End、ページスライダーでの移動では表示しない。スライドショー中は表示しない（ループで先頭に戻るか、停止する）。NeeView の「移動できない」の効果音は鳴らさない。
+
+## 配布（ユーザーと合意、2026-11-11）
+
+- **バージョン**：最初の配布を 1.0.0（ビルド 1）にした。著作権表示（「YomiView について」）は「Copyright © 2026 YomiView contributors. MIT License.」。
+- **形式と配布先**：Developer ID で署名し、Apple の公証を通した DMG（アプリと「アプリケーション」フォルダへのリンク）を GitHub Releases に置く。作成は `scripts/release.sh`。
+- **Hardened Runtime**：公証に必要なため有効にした。サンドボックスは使わない（App Store では配布しないため。phase-0 の方針どおり）。特別な権限（entitlements）は必要ない。
+- **ライセンス表記**：MIT ライセンスの「複製に表記を含める」を満たすため、LICENSE と NOTICE.md をアプリの中（Contents/Resources）に同梱した。
+- **動作確認**：ユーザーが手動確認チェックリストを確認済み（README のチェックリストに記録）。

@@ -35,10 +35,12 @@
 		5EC70DC2044374460AFF0358 /* ReaderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF87CF1127B5F3F2CFE06F61 /* ReaderViewModel.swift */; };
 		5F81E6B74CDB4AF0E7CF10B2 /* PageFileInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7944B1002FD9FEAF16FBAC8B /* PageFileInfo.swift */; };
 		6203652E1FDC18AFCA848778 /* ZipPageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3237B17797BED40CBFBE0238 /* ZipPageProvider.swift */; };
+		623D9844CA31EEFF6F9077EC /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = E02BE631835193A8F696BB87 /* LICENSE */; };
 		6BEDB2EBC946D69F01D53F5E /* PDFPageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C32251EFABB7E83D17A87C03 /* PDFPageProvider.swift */; };
 		6E90CA2579E3F00EC7C5C50B /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 76DD1ACC2597A40B3A791F12 /* AppIcon.icon */; };
 		6FB090038D1D4DD3F9503640 /* ThumbnailStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 383A12B81A1D1D6CC6871D2B /* ThumbnailStore.swift */; };
 		7473382A1F0905C73FFC5DFC /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = AD48062AF1BF7FFA5E211CE1 /* ZIPFoundation */; };
+		760B3C5CEA3F51490A384651 /* NOTICE.md in Resources */ = {isa = PBXBuildFile; fileRef = F383918C274B46E372B2CE5C /* NOTICE.md */; };
 		78BB6A35C74A824E868300EA /* PageProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98D8B3D45E30EFBD2CF2F678 /* PageProviderTests.swift */; };
 		79F135E1EF0AA9BDE4741B20 /* PageListPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FADE10075CB20E922843F19E /* PageListPanelView.swift */; };
 		7C8E85B834847C4FBD666C42 /* PageSort.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A2EF08DD56CFC61ED08A804 /* PageSort.swift */; };
@@ -130,10 +132,12 @@
 		D86E6B9969336D2C4B4A3024 /* PageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageProvider.swift; sourceTree = "<group>"; };
 		D9074FFBA4E5CAB3361A7F28 /* BookSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookSource.swift; sourceTree = "<group>"; };
 		DEDEDF841B1AF20645BFCE2E /* YomiView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YomiView.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E02BE631835193A8F696BB87 /* LICENSE */ = {isa = PBXFileReference; path = LICENSE; sourceTree = "<group>"; };
 		E04AC1D2ED9F7D1B47FDDCD1 /* RecentBooksStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentBooksStore.swift; sourceTree = "<group>"; };
 		EE262AC736E719024C23071F /* FolderPageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPageProvider.swift; sourceTree = "<group>"; };
 		EEE5E5C37E592396C93B9469 /* YomiViewApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YomiViewApp.swift; sourceTree = "<group>"; };
 		EF87CF1127B5F3F2CFE06F61 /* ReaderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderViewModel.swift; sourceTree = "<group>"; };
+		F383918C274B46E372B2CE5C /* NOTICE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = NOTICE.md; sourceTree = "<group>"; };
 		F6784F8AF2C0355B3BE0204C /* ImageCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCacheTests.swift; sourceTree = "<group>"; };
 		FADE10075CB20E922843F19E /* PageListPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageListPanelView.swift; sourceTree = "<group>"; };
 		FEC6D885DA68AEC52E680924 /* FullScreenObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenObserver.swift; sourceTree = "<group>"; };
@@ -242,6 +246,8 @@
 		B589947ADF20CA800AE74B62 = {
 			isa = PBXGroup;
 			children = (
+				E02BE631835193A8F696BB87 /* LICENSE */,
+				F383918C274B46E372B2CE5C /* NOTICE.md */,
 				A83CE940C412766109726FE7 /* YomiView */,
 				2AAF8CDBBCCB125E0EE406FB /* Products */,
 			);
@@ -395,6 +401,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				6E90CA2579E3F00EC7C5C50B /* AppIcon.icon in Resources */,
+				623D9844CA31EEFF6F9077EC /* LICENSE in Resources */,
+				760B3C5CEA3F51490A384651 /* NOTICE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -504,7 +512,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = YomiView/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -667,7 +675,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
-				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = YomiView/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

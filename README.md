@@ -232,18 +232,40 @@ TEST_RUNNER_YOMIVIEW_SNAPSHOT_DIR=/tmp/yomiview-snap TEST_RUNNER_YOMIVIEW_SNAPSH
 
 ## 手動確認チェックリスト（計画書 7章）
 
-- [ ] フォルダ、ZIP、CBZ、PDF をそれぞれ開ける（Phase 1, 2）
-- [ ] 1ページ表示と見開きが切り替わる（Phase 3）
-- [ ] 右開きで左右が正しく入れ替わる（Phase 3）
-- [ ] 表紙が単独表示になる（Phase 3）
-- [ ] 最後のページで止まる（Phase 1, 3）
-- [ ] 再起動後に読書位置が復元される（Phase 6）
-- [ ] 連続でページを送ってもカクつかない（Phase 4）
-- [ ] 外付けドライブ上のファイルも開ける（Phase 6 の 8）
-- [ ] ウィンドウを横長にすると見開きになる（追加仕様、Phase 3）
-- [ ] 矢印キー（← → ↑ ↓）でページ送り・戻り（追加仕様、Phase 5）
-- [ ] 上下スクロールでページ送り・戻り（追加仕様、Phase 5）
-- [ ] PDF をウィンドウにドラッグ＆ドロップして開ける（追加仕様、Phase 7）
+- [x] フォルダ、ZIP、CBZ、PDF をそれぞれ開ける（Phase 1, 2）
+- [x] 1ページ表示と見開きが切り替わる（Phase 3）
+- [x] 右開きで左右が正しく入れ替わる（Phase 3）
+- [x] 表紙が単独表示になる（Phase 3）
+- [x] 最後のページで止まる（Phase 1, 3）
+- [x] 再起動後に読書位置が復元される（Phase 6）
+- [x] 連続でページを送ってもカクつかない（Phase 4）
+- [x] 外付けドライブ上のファイルも開ける（Phase 6 の 8）
+- [x] ウィンドウを横長にすると見開きになる（追加仕様、Phase 3）
+- [x] 矢印キー（← → ↑ ↓）でページ送り・戻り（追加仕様、Phase 5）
+- [x] 上下スクロールでページ送り・戻り（追加仕様、Phase 5）
+- [x] PDF をウィンドウにドラッグ＆ドロップして開ける（追加仕様、Phase 7）
+
+## 配布用 DMG の作り方
+
+Developer ID で署名し、Apple の公証を通した DMG を `build/release/` に作る。
+
+事前の準備（一度だけ）：
+
+1. Xcode ▸ 設定 ▸ Accounts で Apple Developer Program のアカウントを選び、Manage Certificates… ▸ ＋ ▸「Developer ID Application」で証明書を作る
+2. [appleid.apple.com](https://appleid.apple.com) で App 用パスワードを作り、公証用の認証情報をキーチェーンに保存する：
+
+```sh
+xcrun notarytool store-credentials YomiView --apple-id <Apple ID> --team-id <チーム ID>
+```
+
+作成：
+
+```sh
+scripts/release.sh            # Release ビルド → 署名 → DMG → 公証 → ステープル
+NOTARIZE=0 scripts/release.sh # 公証せずに署名と DMG の作成だけ
+```
+
+バージョンは `YomiView/Resources/Info.plist` の `CFBundleShortVersionString`。
 
 ## ライセンス
 

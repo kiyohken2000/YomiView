@@ -34,6 +34,11 @@ targets:
       - path: YomiView/Resources/AppIcon.icon
         type: file
         buildPhase: resources
+      # MIT ライセンスの表記（NeeView・ZIPFoundation を含む）を配布するアプリに同梱する
+      - path: LICENSE
+        buildPhase: resources
+      - path: NOTICE.md
+        buildPhase: resources
     dependencies:
       - package: ZIPFoundation
     settings:
@@ -42,7 +47,7 @@ targets:
         PRODUCT_NAME: YomiView
         INFOPLIST_FILE: YomiView/Resources/Info.plist
         GENERATE_INFOPLIST_FILE: NO
-        ENABLE_HARDENED_RUNTIME: NO
+        ENABLE_HARDENED_RUNTIME: YES
         ENABLE_APP_SANDBOX: NO
         COMBINE_HIDPI_IMAGES: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
