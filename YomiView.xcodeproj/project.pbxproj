@@ -11,7 +11,10 @@
 		0ABBAAEBFEF1183410287F36 /* NaturalSortTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76201A653BE5D196F00C4C29 /* NaturalSortTests.swift */; };
 		1025E0CEFAC4222401AFBBBD /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C3FF7726F93FF0C75416016 /* SettingsView.swift */; };
 		15D91C429F7EE2009A0C9233 /* PageImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D697D55F1E58F5AFD1B621C2 /* PageImageView.swift */; };
+		186CB63E00501BC7AB865317 /* ScrollPager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C74601DBC39CDB8193B42EB8 /* ScrollPager.swift */; };
 		26914860ACBF295525395CE9 /* BookSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9074FFBA4E5CAB3361A7F28 /* BookSource.swift */; };
+		2A76111E75BAEBC6940C60A2 /* ScrollPagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D13902B4645E8BC6A237EC30 /* ScrollPagerTests.swift */; };
+		38D85777D51CFC25B317F968 /* ScrollWheelMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23AE3E191A9C29DCDC81A317 /* ScrollWheelMonitor.swift */; };
 		4DEDCDFD7834D8301F01E62D /* PDFPageProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B2B95CBB163992C7F991CEB /* PDFPageProviderTests.swift */; };
 		50F7F33EB895A1CCE92B8E3E /* ReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B76CC7D4853A8CA725860C7 /* ReaderView.swift */; };
 		5128AE48FD6AB1E827A8FC82 /* ReaderViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9621DEDC4FF11AE858E386F9 /* ReaderViewModelTests.swift */; };
@@ -47,6 +50,7 @@
 
 /* Begin PBXFileReference section */
 		1FA0D0954AC94CE0B9361B83 /* NaturalSort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaturalSort.swift; sourceTree = "<group>"; };
+		23AE3E191A9C29DCDC81A317 /* ScrollWheelMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollWheelMonitor.swift; sourceTree = "<group>"; };
 		3015DBC461C30E166A74C5A6 /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
 		3237B17797BED40CBFBE0238 /* ZipPageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipPageProvider.swift; sourceTree = "<group>"; };
 		5C1326321B7720B7C3564A97 /* ReadingDirection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingDirection.swift; sourceTree = "<group>"; };
@@ -64,7 +68,9 @@
 		9C6237D0A21D52AF5A1D5D99 /* YomiViewTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YomiViewTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B0011EB4302452BA68A23701 /* SpreadCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpreadCalculatorTests.swift; sourceTree = "<group>"; };
 		C32251EFABB7E83D17A87C03 /* PDFPageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFPageProvider.swift; sourceTree = "<group>"; };
+		C74601DBC39CDB8193B42EB8 /* ScrollPager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollPager.swift; sourceTree = "<group>"; };
 		D050C44D558DE3F1912548A1 /* SpreadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpreadView.swift; sourceTree = "<group>"; };
+		D13902B4645E8BC6A237EC30 /* ScrollPagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollPagerTests.swift; sourceTree = "<group>"; };
 		D697D55F1E58F5AFD1B621C2 /* PageImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageImageView.swift; sourceTree = "<group>"; };
 		D86E6B9969336D2C4B4A3024 /* PageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageProvider.swift; sourceTree = "<group>"; };
 		D9074FFBA4E5CAB3361A7F28 /* BookSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookSource.swift; sourceTree = "<group>"; };
@@ -110,6 +116,7 @@
 				81BBEE5F8AC0AA6ECF49FFDE /* AppSettings.swift */,
 				3015DBC461C30E166A74C5A6 /* ImageCache.swift */,
 				1FA0D0954AC94CE0B9361B83 /* NaturalSort.swift */,
+				C74601DBC39CDB8193B42EB8 /* ScrollPager.swift */,
 				8401B49D11C102F287AC6E71 /* SpreadCalculator.swift */,
 			);
 			path = Services;
@@ -178,6 +185,7 @@
 			children = (
 				D697D55F1E58F5AFD1B621C2 /* PageImageView.swift */,
 				6B76CC7D4853A8CA725860C7 /* ReaderView.swift */,
+				23AE3E191A9C29DCDC81A317 /* ScrollWheelMonitor.swift */,
 				5C3FF7726F93FF0C75416016 /* SettingsView.swift */,
 				D050C44D558DE3F1912548A1 /* SpreadView.swift */,
 			);
@@ -203,6 +211,7 @@
 				98D8B3D45E30EFBD2CF2F678 /* PageProviderTests.swift */,
 				9B2B95CBB163992C7F991CEB /* PDFPageProviderTests.swift */,
 				9621DEDC4FF11AE858E386F9 /* ReaderViewModelTests.swift */,
+				D13902B4645E8BC6A237EC30 /* ScrollPagerTests.swift */,
 				B0011EB4302452BA68A23701 /* SpreadCalculatorTests.swift */,
 			);
 			path = Tests;
@@ -302,6 +311,7 @@
 				4DEDCDFD7834D8301F01E62D /* PDFPageProviderTests.swift in Sources */,
 				78BB6A35C74A824E868300EA /* PageProviderTests.swift in Sources */,
 				5128AE48FD6AB1E827A8FC82 /* ReaderViewModelTests.swift in Sources */,
+				2A76111E75BAEBC6940C60A2 /* ScrollPagerTests.swift in Sources */,
 				BD81E1BF8C718F9F8684687C /* SpreadCalculatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -322,6 +332,8 @@
 				50F7F33EB895A1CCE92B8E3E /* ReaderView.swift in Sources */,
 				5EC70DC2044374460AFF0358 /* ReaderViewModel.swift in Sources */,
 				AD34F7C77BB718B198B1D1CF /* ReadingDirection.swift in Sources */,
+				186CB63E00501BC7AB865317 /* ScrollPager.swift in Sources */,
+				38D85777D51CFC25B317F968 /* ScrollWheelMonitor.swift in Sources */,
 				1025E0CEFAC4222401AFBBBD /* SettingsView.swift in Sources */,
 				91C9F8E49D7D4C39D1D919DA /* SpreadCalculator.swift in Sources */,
 				5444B040E44BB3CC1A3CC0A5 /* SpreadView.swift in Sources */,

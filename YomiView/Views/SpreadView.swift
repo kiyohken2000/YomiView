@@ -4,11 +4,23 @@ import SwiftUI
 struct SpreadView: View {
     /// 左から並べるページとその状態
     let pages: [(index: Int, state: ReaderViewModel.PageState)]
+    var zoomMode: ReaderViewModel.ZoomMode = .fit
 
     /// 読み込み前・失敗したページの仮の縦横比（幅 / 高さ）。一般的な漫画のページに近い値
     static let placeholderAspect: CGFloat = 0.7
 
+    /// 読み込み前・失敗したページの原寸表示での仮の大きさ
+    static let placeholderSize = CGSize(width: 700, height: 1000)
+
     var body: some View {
+        switch zoomMode {
+        case .fit: fitted
+        case .original: original
+        }
+    }
+
+    /// ウィンドウに合わせる
+    private var fitted: some View {
         GeometryReader { geometry in
             let aspects = pages.map { Self.aspect(of: $0.state) }
             let height = Self.fittedHeight(container: geometry.size, aspects: aspects)
@@ -20,6 +32,27 @@ struct SpreadView: View {
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
+    }
+
+    /// 原寸。ウィンドウより大きければスクロールして見る
+    private var original: some View {
+        GeometryReader { geometry in
+            ScrollView([.horizontal, .vertical]) {
+                HStack(spacing: 0) {
+                    ForEach(pages, id: \.index) { page in
+                        let size = Self.originalSize(of: page.state)
+                        PageImageView(state: page.state)
+                            .frame(width: size.width, height: size.height)
+                    }
+                }
+                .frame(minWidth: geometry.size.width, minHeight: geometry.size.height)
+            }
+        }
+    }
+
+    static func originalSize(of state: ReaderViewModel.PageState) -> CGSize {
+        if case .loaded(let image) = state { return image.pointSize }
+        return placeholderSize
     }
 
     static func aspect(of state: ReaderViewModel.PageState) -> CGFloat {

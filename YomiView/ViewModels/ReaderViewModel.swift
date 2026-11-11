@@ -22,6 +22,14 @@ final class ReaderViewModel {
         }
     }
 
+    /// 画像の大きさ
+    enum ZoomMode {
+        /// ウィンドウに合わせる
+        case fit
+        /// 原寸
+        case original
+    }
+
     let settings: AppSettings
 
     private(set) var provider: PageProvider?
@@ -35,6 +43,10 @@ final class ReaderViewModel {
     private(set) var widePages: [Int: Bool] = [:]
     /// M キーなどで手動で選んだ表示モード。nil なら表示領域の形で自動的に決める
     var manualViewMode: ViewMode?
+    /// 画像の大きさ（初期値はウィンドウに合わせる）
+    var zoomMode: ZoomMode = .fit {
+        didSet { if zoomMode != oldValue { scheduleLoads() } }
+    }
     /// 表示領域の大きさ（ポイント）
     private(set) var containerSize: CGSize = .zero
     /// 表示領域の画面の倍率（Retina なら 2）
@@ -182,6 +194,20 @@ final class ReaderViewModel {
         readingDirection == .rightToLeft ? goPrevious() : goNext()
     }
 
+    /// 先頭の組へ
+    func goFirst() {
+        guard let first = spreads.first, first.first != currentIndex else { return }
+        currentIndex = first.first
+        scheduleLoads()
+    }
+
+    /// 末尾の組へ
+    func goLast() {
+        guard let last = spreads.last, currentSpread != last else { return }
+        currentIndex = last.first
+        scheduleLoads()
+    }
+
     private func moveSpread(by offset: Int) {
         let spreads = spreads
         guard let index = SpreadCalculator.spreadIndex(containing: currentIndex, in: spreads) else { return }
@@ -196,10 +222,14 @@ final class ReaderViewModel {
     /// 読み込む画像の長辺（ピクセル）。表示領域の長辺に画面の倍率を掛け、256 単位に切り上げる。
     /// 少しのウィンドウサイズ変更で読み直さないようにするため。
     var requiredPixelSize: Int {
+        if zoomMode == .original { return Self.originalMaxPixelSize }
         let longSide = max(containerSize.width, containerSize.height) * displayScale
         guard longSide > 0 else { return Self.screenMaxPixelSize() }
         return max(256, Int((longSide / 256).rounded(.up)) * 256)
     }
+
+    /// 原寸表示で読み込む長辺の上限（ピクセル）。これより大きい画像は縮小する
+    static let originalMaxPixelSize = 8192
 
     /// 表示領域の大きさが分からないときに使う、画面の長辺（ピクセル）
     nonisolated static func screenMaxPixelSize() -> Int {

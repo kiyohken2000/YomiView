@@ -10,7 +10,10 @@ struct ReaderView: View {
         ZStack {
             Color.black
             if viewModel.isBookOpen {
-                SpreadView(pages: viewModel.displayedPages.map { ($0, viewModel.state(of: $0)) })
+                SpreadView(
+                    pages: viewModel.displayedPages.map { ($0, viewModel.state(of: $0)) },
+                    zoomMode: viewModel.zoomMode
+                )
             } else {
                 emptyBookView
             }
@@ -34,22 +37,16 @@ struct ReaderView: View {
         .focused($isFocused)
         .onAppear { isFocused = true }
         .onChange(of: viewModel.currentSpread) { viewModel.scheduleLoads() }
-        .onKeyPress(.rightArrow) {
-            viewModel.goRight()
-            return .handled
+        .onKeyPress(keys: Self.handledKeys, phases: [.down, .repeat]) { press in
+            handleKey(press)
         }
-        .onKeyPress(.leftArrow) {
-            viewModel.goLeft()
-            return .handled
-        }
-        .onKeyPress(characters: CharacterSet(charactersIn: "mMdD")) { press in
-            guard press.modifiers.subtracting(.shift).isEmpty else { return .ignored }
-            switch press.characters.lowercased() {
-            case "m": viewModel.toggleViewMode()
-            case "d": viewModel.toggleReadingDirection()
-            default: return .ignored
+        .background {
+            ScrollWheelMonitor(isEnabled: viewModel.isBookOpen && viewModel.zoomMode == .fit) { action in
+                switch action {
+                case .next: viewModel.goNext()
+                case .previous: viewModel.goPrevious()
+                }
             }
-            return .handled
         }
         .focusedSceneValue(\.readerViewModel, viewModel)
         .alert(
@@ -64,6 +61,39 @@ struct ReaderView: View {
         } message: { message in
             Text(message)
         }
+    }
+
+    // MARK: - キーボード操作（計画書 5.4 と追加仕様の ↑↓）
+
+    private static let handledKeys: Set<KeyEquivalent> = [
+        .leftArrow, .rightArrow, .upArrow, .downArrow, .space, .home, .end,
+        "f", "F", "m", "M", "d", "D",
+    ]
+
+    private func handleKey(_ press: KeyPress) -> KeyPress.Result {
+        // ⌘・⌃・⌥ 付きはメニューのショートカットなどに任せる
+        guard press.modifiers.isDisjoint(with: [.command, .control, .option]) else { return .ignored }
+        let isRepeat = press.phase == .repeat
+        switch press.key {
+        case .rightArrow: viewModel.goRight()
+        case .leftArrow: viewModel.goLeft()
+        case .downArrow: viewModel.goNext()
+        case .upArrow: viewModel.goPrevious()
+        case .space:
+            press.modifiers.contains(.shift) ? viewModel.goPrevious() : viewModel.goNext()
+        case .home: viewModel.goFirst()
+        case .end: viewModel.goLast()
+        default:
+            // 切り替え操作はキーを押し続けても繰り返さない
+            guard !isRepeat else { return .handled }
+            switch press.characters.lowercased() {
+            case "f": NSApp.keyWindow?.toggleFullScreen(nil)
+            case "m": viewModel.toggleViewMode()
+            case "d": viewModel.toggleReadingDirection()
+            default: return .ignored
+            }
+        }
+        return .handled
     }
 
     private var emptyBookView: some View {

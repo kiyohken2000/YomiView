@@ -240,6 +240,24 @@ final class ReaderViewModelTests: XCTestCase {
         XCTFail("先読みが終わらない")
     }
 
+    func testJumpToFirstAndLast() {
+        let viewModel = makeViewModel()
+        viewModel.manualViewMode = .spread
+        viewModel.setProvider(FakeProvider(count: 6))
+        viewModel.goLast()
+        XCTAssertEqual(viewModel.currentSpread?.pages, [5])
+        viewModel.goFirst()
+        XCTAssertEqual(viewModel.currentSpread?.pages, [0])
+    }
+
+    func testOriginalZoomLoadsLargerImages() {
+        let viewModel = makeViewModel()
+        viewModel.updateContainerSize(CGSize(width: 800, height: 600), displayScale: 2)
+        XCTAssertEqual(viewModel.requiredPixelSize, 1792)
+        viewModel.zoomMode = .original
+        XCTAssertEqual(viewModel.requiredPixelSize, ReaderViewModel.originalMaxPixelSize)
+    }
+
     func testCurrentPageIsKeptWhenSwitchingModes() {
         let viewModel = makeViewModel()
         viewModel.manualViewMode = .single

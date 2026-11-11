@@ -36,6 +36,13 @@ struct ReaderCommands: Commands {
                 AppSettings.shared.readingDirection = AppSettings.shared.readingDirection.toggled
             }
             Divider()
+            Button("ウィンドウに合わせる") { viewModel?.zoomMode = .fit }
+                .keyboardShortcut("9", modifiers: .command)
+                .disabled(viewModel == nil || viewModel?.zoomMode == .fit)
+            Button("原寸") { viewModel?.zoomMode = .original }
+                .keyboardShortcut("0", modifiers: .command)
+                .disabled(viewModel == nil || viewModel?.zoomMode == .original)
+            Divider()
         }
     }
 }
