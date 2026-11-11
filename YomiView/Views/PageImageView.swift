@@ -12,7 +12,7 @@ struct PageImageView: View {
             ProgressView()
                 .controlSize(.small)
         case .loaded(let image):
-            Image(decorative: image, scale: 1)
+            Image(decorative: image.cgImage, scale: 1)
                 .resizable()
                 .interpolation(.high)
                 .aspectRatio(contentMode: .fit)

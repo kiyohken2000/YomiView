@@ -7,13 +7,15 @@ enum BookSource: Equatable {
     case folder(URL)
     /// ZIP または CBZ アーカイブ
     case archive(URL)
+    /// PDF
+    case pdf(URL)
 
     /// アーカイブとして扱う拡張子（小文字）
     static let archiveExtensions: Set<String> = ["zip", "cbz"]
 
     var url: URL {
         switch self {
-        case .folder(let url), .archive(let url):
+        case .folder(let url), .archive(let url), .pdf(let url):
             return url
         }
     }
@@ -27,8 +29,12 @@ enum BookSource: Equatable {
         if isDirectory.boolValue {
             return .folder(url)
         }
-        if archiveExtensions.contains(url.pathExtension.lowercased()) {
+        let ext = url.pathExtension.lowercased()
+        if archiveExtensions.contains(ext) {
             return .archive(url)
+        }
+        if ext == "pdf" {
+            return .pdf(url)
         }
         throw BookError.unsupportedFormat(url.lastPathComponent)
     }
@@ -40,6 +46,8 @@ enum BookSource: Equatable {
             return try FolderPageProvider(folderURL: url)
         case .archive(let url):
             return try ZipPageProvider(archiveURL: url)
+        case .pdf(let url):
+            return try PDFPageProvider(pdfURL: url)
         }
     }
 }
@@ -49,6 +57,7 @@ enum BookError: LocalizedError, Equatable {
     case notFound(String)
     case unsupportedFormat(String)
     case unreadableArchive(String)
+    case unreadablePDF(String)
     case noImages(String)
     case pageOutOfRange(Int)
     case imageDecodeFailed(String)
@@ -58,9 +67,11 @@ enum BookError: LocalizedError, Equatable {
         case .notFound(let name):
             return "「\(name)」が見つかりません。"
         case .unsupportedFormat(let name):
-            return "「\(name)」は対応していない形式です。フォルダ、ZIP、CBZ を開けます。"
+            return "「\(name)」は対応していない形式です。フォルダ、ZIP、CBZ、PDF を開けます。"
         case .unreadableArchive(let name):
             return "「\(name)」を読み込めません。ファイルが壊れている可能性があります。"
+        case .unreadablePDF(let name):
+            return "「\(name)」を PDF として読み込めません。ファイルが壊れているか、パスワードで保護されている可能性があります。"
         case .noImages(let name):
             return "「\(name)」には表示できる画像がありません。"
         case .pageOutOfRange(let index):
@@ -74,7 +85,7 @@ enum BookError: LocalizedError, Equatable {
 extension BookSource {
     /// ファイル選択ダイアログで選べるファイルの種類（フォルダは canChooseDirectories で選ぶ）
     static var openPanelContentTypes: [UTType] {
-        var types: [UTType] = [.zip]
+        var types: [UTType] = [.zip, .pdf]
         if let cbz = UTType(filenameExtension: "cbz") {
             types.append(cbz)
         }

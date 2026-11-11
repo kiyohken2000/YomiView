@@ -47,7 +47,7 @@ struct ReaderView: View {
         VStack(spacing: 12) {
             Image(systemName: "book")
                 .font(.system(size: 40))
-            Text("フォルダ、ZIP、CBZ を開いてください")
+            Text("フォルダ、ZIP、CBZ、PDF を開いてください")
             Button("開く…") { viewModel.presentOpenPanel() }
         }
         .foregroundStyle(.secondary)

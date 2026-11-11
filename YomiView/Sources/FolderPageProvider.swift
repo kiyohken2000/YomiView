@@ -32,10 +32,10 @@ final class FolderPageProvider: PageProvider {
         }
     }
 
-    func loadImage(at index: Int, maxPixelSize: Int) throws -> CGImage {
+    func loadImage(at index: Int, maxPixelSize: Int) throws -> PageImage {
         guard pages.indices.contains(index), case .file(let url) = pages[index].kind else {
             throw BookError.pageOutOfRange(index)
         }
-        return try ImageLoading.downsample(url: url, maxPixelSize: maxPixelSize)
+        return PageImage(cgImage: try ImageLoading.downsample(url: url, maxPixelSize: maxPixelSize))
     }
 }

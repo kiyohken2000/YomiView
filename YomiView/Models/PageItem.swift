@@ -8,6 +8,8 @@ struct PageItem: Equatable, Identifiable {
         case file(URL)
         /// アーカイブ内のエントリ（アーカイブ内のパス）
         case archiveEntry(path: String)
+        /// PDF のページ（0 始まり）
+        case pdfPage(Int)
     }
 
     /// 本の中での 0 始まりの位置

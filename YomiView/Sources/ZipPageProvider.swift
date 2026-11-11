@@ -46,7 +46,7 @@ final class ZipPageProvider: PageProvider, @unchecked Sendable {
         }
     }
 
-    func loadImage(at index: Int, maxPixelSize: Int) throws -> CGImage {
+    func loadImage(at index: Int, maxPixelSize: Int) throws -> PageImage {
         guard entries.indices.contains(index) else {
             throw BookError.pageOutOfRange(index)
         }
@@ -61,7 +61,7 @@ final class ZipPageProvider: PageProvider, @unchecked Sendable {
         } catch {
             throw BookError.imageDecodeFailed(name)
         }
-        return try ImageLoading.downsample(data: data, maxPixelSize: maxPixelSize, name: name)
+        return PageImage(cgImage: try ImageLoading.downsample(data: data, maxPixelSize: maxPixelSize, name: name))
     }
 
     /// ページとして扱うエントリのパスか。

@@ -11,7 +11,22 @@ protocol PageProvider: AnyObject, Sendable {
     /// 自然順に並んだページ
     var pages: [PageItem] { get }
     /// 指定ページの画像を、長辺が `maxPixelSize` 以下になるよう縮小して読み込む。
-    func loadImage(at index: Int, maxPixelSize: Int) throws -> CGImage
+    func loadImage(at index: Int, maxPixelSize: Int) throws -> PageImage
+}
+
+/// 読み込んだページの画像。
+struct PageImage: @unchecked Sendable {
+    let cgImage: CGImage
+    /// 原寸表示のときのサイズ（ポイント）。画像ファイルは読み込んだピクセル数、PDF はページのサイズ。
+    let pointSize: CGSize
+
+    init(cgImage: CGImage, pointSize: CGSize? = nil) {
+        self.cgImage = cgImage
+        self.pointSize = pointSize ?? CGSize(width: cgImage.width, height: cgImage.height)
+    }
+
+    /// 横長（幅が高さより大きい）か
+    var isWide: Bool { pointSize.width > pointSize.height }
 }
 
 extension PageProvider {

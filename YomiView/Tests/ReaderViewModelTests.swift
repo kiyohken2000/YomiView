@@ -13,13 +13,13 @@ private final class FakeProvider: PageProvider, @unchecked Sendable {
         self.failingIndex = failingIndex
     }
 
-    func loadImage(at index: Int, maxPixelSize: Int) throws -> CGImage {
+    func loadImage(at index: Int, maxPixelSize: Int) throws -> PageImage {
         if index == failingIndex { throw BookError.imageDecodeFailed(pages[index].name) }
         let context = CGContext(
             data: nil, width: index + 1, height: 1, bitsPerComponent: 8, bytesPerRow: 0,
             space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         )!
-        return context.makeImage()!
+        return PageImage(cgImage: context.makeImage()!)
     }
 }
 
@@ -34,7 +34,7 @@ final class ReaderViewModelTests: XCTestCase {
     }
 
     private func loadedWidth(_ viewModel: ReaderViewModel) -> Int? {
-        if case .loaded(let image) = viewModel.pageState { return image.width }
+        if case .loaded(let image) = viewModel.pageState { return image.cgImage.width }
         return nil
     }
 

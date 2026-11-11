@@ -10,13 +10,13 @@ final class ReaderViewModel {
     enum PageState: Equatable {
         case empty
         case loading
-        case loaded(CGImage)
+        case loaded(PageImage)
         case failed(String)
 
         static func == (lhs: PageState, rhs: PageState) -> Bool {
             switch (lhs, rhs) {
             case (.empty, .empty), (.loading, .loading): return true
-            case let (.loaded(a), .loaded(b)): return a === b
+            case let (.loaded(a), .loaded(b)): return a.cgImage === b.cgImage
             case let (.failed(a), .failed(b)): return a == b
             default: return false
             }
@@ -47,7 +47,7 @@ final class ReaderViewModel {
         let panel = NSOpenPanel()
         panel.title = "本を開く"
         panel.prompt = "開く"
-        panel.message = "フォルダ、ZIP、CBZ を選択してください"
+        panel.message = "フォルダ、ZIP、CBZ、PDF を選択してください"
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
@@ -110,7 +110,7 @@ final class ReaderViewModel {
         let maxPixelSize = Self.displayMaxPixelSize()
         pageState = .loading
         loadTask = Task { [weak self] in
-            let result: Result<CGImage, Error> = await Task.detached(priority: .userInitiated) {
+            let result: Result<PageImage, Error> = await Task.detached(priority: .userInitiated) {
                 Result { try provider.loadImage(at: index, maxPixelSize: maxPixelSize) }
             }.value
             guard let self, !Task.isCancelled, self.currentIndex == index, self.provider === provider else { return }

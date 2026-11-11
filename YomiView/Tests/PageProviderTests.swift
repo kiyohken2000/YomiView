@@ -73,7 +73,7 @@ final class PageProviderTests: XCTestCase {
         try pngData(width: 40, height: 60).write(to: folder.appendingPathComponent("1.png"))
 
         let provider = try FolderPageProvider(folderURL: folder)
-        let image = try provider.loadImage(at: 0, maxPixelSize: 1000)
+        let image = try provider.loadImage(at: 0, maxPixelSize: 1000).cgImage
         XCTAssertEqual(image.width, 40)
         XCTAssertEqual(image.height, 60)
     }
@@ -145,7 +145,7 @@ final class PageProviderTests: XCTestCase {
         let url = try makeZip(named: "big.zip", entries: ["1.png": try pngData(width: 400, height: 800)])
 
         let provider = try ZipPageProvider(archiveURL: url)
-        let image = try provider.loadImage(at: 0, maxPixelSize: 100)
+        let image = try provider.loadImage(at: 0, maxPixelSize: 100).cgImage
 
         XCTAssertEqual(max(image.width, image.height), 100)
         XCTAssertEqual(image.width, 50)
