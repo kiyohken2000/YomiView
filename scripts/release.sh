@@ -33,13 +33,14 @@ xcodegen generate -q
 xcodebuild -project YomiView.xcodeproj -scheme YomiView -configuration Release \
   -destination 'platform=macOS' -derivedDataPath "$DERIVED" \
   CODE_SIGN_IDENTITY="$IDENTITY" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$TEAM" \
-  OTHER_CODE_SIGN_FLAGS="--timestamp" \
+  OTHER_CODE_SIGN_FLAGS="--timestamp" CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
   build | grep -E "error:|warning:|BUILD" || true
 
 APP="$DERIVED/Build/Products/Release/YomiView.app"
 [[ -d "$APP" ]] || { echo "ビルドに失敗しました" >&2; exit 1; }
 codesign --verify --deep --strict --verbose=2 "$APP"
-codesign -dv "$APP" 2>&1 | grep -q "runtime" || { echo "Hardened Runtime が有効になっていません" >&2; exit 1; }
+SIGN_INFO=$(codesign -dv "$APP" 2>&1)
+[[ "$SIGN_INFO" == *"(runtime)"* ]] || { echo "Hardened Runtime が有効になっていません" >&2; exit 1; }
 
 # DMG：アプリと「アプリケーション」フォルダへのリンクを並べる
 STAGE="$OUT/stage"
